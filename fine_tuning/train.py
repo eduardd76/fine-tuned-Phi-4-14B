@@ -214,6 +214,14 @@ def train(config: dict[str, Any], resume_from: str | None = None) -> None:
     data_cfg = config["data"]
     out_cfg = config["output"]
     reasoning_cfg = config.get("reasoning_loss", {})
+    wandb_cfg = config.get("wandb", {})
+
+    # ── Configure W&B ────────────────────────────────────────
+    if wandb_cfg:
+        os.environ.setdefault("WANDB_PROJECT", wandb_cfg.get("project", "phi4-network-architect"))
+        run_name = wandb_cfg.get("run_name", "phi4-training")
+    else:
+        run_name = "phi4-training"
 
     # ── Load base model ──────────────────────────────────────
     log.info(f"Loading base model: {model_cfg['name']}")
@@ -284,7 +292,8 @@ def train(config: dict[str, Any], resume_from: str | None = None) -> None:
         seed=train_cfg["seed"],
         eval_strategy="steps" if val_dataset else "no",
         load_best_model_at_end=train_cfg.get("load_best_model_at_end", True) if val_dataset else False,
-        report_to=["tensorboard"],
+        report_to=["wandb"],
+        run_name=run_name,
     )
 
     # ── Build trainer (with optional reasoning-weighted loss) ──

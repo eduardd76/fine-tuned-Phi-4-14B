@@ -65,6 +65,10 @@ output:
   hub_model_id: null  # Set to push to HuggingFace Hub
   hub_token: null
 
+wandb:
+  project: "phi4-network-architect"
+  run_name: "stage1-sft"
+
 # Chat template for Phi-4
 chat_template: "phi4"
 # Format: <|system|>...<|end|>\n<|user|>...<|end|>\n<|assistant|>...<|end|>
