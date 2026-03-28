@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+venv/
+
+# Models (too large for git - use HuggingFace Hub)
+models/
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.pth
+
+# Generated data (regenerate with dataset_generator.py)
+generated_data/
+lancedb/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+tensorboard_logs/
+runs/
+
+# Temp
+*.tmp
+*.cache

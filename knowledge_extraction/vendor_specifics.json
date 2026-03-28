@@ -1,0 +1,324 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-03-28",
+    "source": "Cisco Design Guides, Juniper Technical Documentation, Arista EOS Documentation"
+  },
+  "cisco": {
+    "routing_protocols": {
+      "bgp": {
+        "best_practices": [
+          "Use loopback interfaces for BGP peering (more stable than physical interfaces)",
+          "Configure MD5 authentication for all eBGP peers",
+          "Use route policies to filter what is advertised and received",
+          "Implement prefix-list based filtering (more efficient than ACL-based)",
+          "Use BGP communities for traffic engineering and policy",
+          "Configure maximum-prefix limit to protect against route table overflow",
+          "Use peer groups for identical neighbor configuration"
+        ],
+        "config_templates": {
+          "basic_ebgp": "router bgp {local_as}\n  bgp router-id {loopback_ip}\n  neighbor {peer_ip} remote-as {peer_as}\n  neighbor {peer_ip} description {description}\n  neighbor {peer_ip} password {md5_password}\n  neighbor {peer_ip} update-source Loopback0\n  neighbor {peer_ip} ebgp-multihop 2\n  address-family ipv4\n    neighbor {peer_ip} activate\n    neighbor {peer_ip} soft-reconfiguration inbound\n    neighbor {peer_ip} prefix-list FILTER-IN in\n    neighbor {peer_ip} prefix-list FILTER-OUT out",
+          "ibgp_with_rr": "router bgp {as_number}\n  bgp router-id {router_id}\n  bgp cluster-id {cluster_id}\n  neighbor {client_ip} remote-as {as_number}\n  neighbor {client_ip} route-reflector-client\n  neighbor {client_ip} update-source Loopback0"
+        },
+        "platform_limits": {
+          "catalyst_9500": "Full BGP table (1M+ routes)",
+          "catalyst_9300": "256K routes default, scalable to 1M with hardware option",
+          "isr4000": "Full BGP table with adequate RAM",
+          "asr1000": "Full BGP table, carrier-class"
+        }
+      },
+      "ospf": {
+        "best_practices": [
+          "Use area design to limit LSA flooding scope",
+          "Summarize routes at ABRs to reduce LSA count",
+          "Configure authentication for OSPF neighbor relationships",
+          "Use passive-interface for non-routing interfaces",
+          "Set reference bandwidth for accurate cost calculation: auto-cost reference-bandwidth 100000",
+          "Use point-to-point network type on point-to-point links (no DR/BDR election)",
+          "BFD for sub-second failure detection"
+        ],
+        "config_templates": {
+          "basic_ospf": "router ospf {process_id}\n  router-id {router_id}\n  auto-cost reference-bandwidth 100000\n  area 0 authentication message-digest\n  passive-interface default\n  no passive-interface {active_interfaces}\n  network {network} {wildcard} area {area}",
+          "interface_config": "interface {int}\n  ip ospf {process_id} area {area}\n  ip ospf network point-to-point\n  ip ospf authentication message-digest\n  ip ospf message-digest-key 1 md5 {password}\n  ip ospf bfd"
+        },
+        "area_types": {
+          "backbone": "Area 0 - all other areas must connect through backbone",
+          "standard": "Carries all LSA types (1, 2, 3, 4, 5)",
+          "stub": "No Type 5 (external) LSAs, uses default route",
+          "totally_stubby": "Only default route, no Type 3 summary LSAs (Cisco proprietary)",
+          "nssa": "No Type 5 LSAs but allows redistribution via Type 7",
+          "totally_nssa": "Only default route, allows redistribution (Cisco proprietary)"
+        }
+      },
+      "eigrp": {
+        "best_practices": [
+          "Use named mode EIGRP for better feature support",
+          "Configure authentication with key chains",
+          "Set bandwidth on serial interfaces correctly (affects EIGRP metric)",
+          "Use summarization at major network boundaries",
+          "Stub routers for hub-and-spoke (reduces query scope)"
+        ],
+        "config_template": "router eigrp CAMPUS\n  address-family ipv4 unicast autonomous-system {as}\n    af-interface {interface}\n      authentication mode md5\n      authentication key-chain {keychain}\n    af-interface default\n      passive-interface\n    network {network} {wildcard}\n    eigrp router-id {router_id}"
+      }
+    },
+    "switching": {
+      "stp": {
+        "recommended_mode": "Rapid PVST+ (default on Catalyst) or MSTP for larger environments",
+        "best_practices": [
+          "Configure root bridge explicitly (do not rely on default priority)",
+          "Enable PortFast on all access ports: spanning-tree portfast default",
+          "Enable BPDU Guard on all access ports: spanning-tree bpduguard enable",
+          "Enable Root Guard on distribution-to-access uplinks",
+          "Enable Loop Guard on redundant links",
+          "Enable BPDU Filter only if PortFast used without BPDU Guard (careful)"
+        ],
+        "priority_values": {
+          "root_bridge": "4096 or 8192",
+          "backup_root": "8192 or 16384",
+          "access_layer": "32768 (default)"
+        }
+      },
+      "vlan_design": {
+        "naming_convention": "Descriptive names: DATA, VOICE, MGMT, NATIVE, PRINTERS",
+        "native_vlan": "Change native VLAN from default (VLAN 1): switchport trunk native vlan 999",
+        "vlan_1": "Never use VLAN 1 for user traffic - management and security risk",
+        "voice_vlan": "Separate VLAN for IP phones: switchport voice vlan {id}"
+      }
+    },
+    "high_availability": {
+      "vss": {
+        "description": "Virtual Switching System - two Catalyst switches operate as single logical switch",
+        "supported_platforms": ["Catalyst 6800", "Catalyst 4500-X"],
+        "benefits": ["Active-active chassis", "Single management point", "MEC (Multichassis EtherChannel)"],
+        "limitations": ["Same physical location requirement", "Limited geographic separation"]
+      },
+      "stackwise_virtual": {
+        "description": "Catalyst 9000 series equivalent of VSS",
+        "supported_platforms": ["Catalyst 9500", "Catalyst 9400", "Catalyst 9300"],
+        "benefits": ["Active-active", "Non-stop forwarding (NSF)", "Sub-second failover"],
+        "config": "stackwise-virtual\n  domain {id}\ninterface {svl_interface}\n  stackwise-virtual link {link_id}"
+      },
+      "hsrp": {
+        "versions": {
+          "v1": "Supports groups 0-255, uses multicast 224.0.0.2",
+          "v2": "Supports groups 0-4095, uses multicast 224.0.0.102, IPv6 support"
+        },
+        "config_template": "interface Vlan{id}\n  ip address {primary_ip} {mask}\n  standby version 2\n  standby {group} ip {virtual_ip}\n  standby {group} priority {priority}\n  standby {group} preempt delay minimum 60\n  standby {group} authentication md5 key-string {key}\n  standby {group} track {interface} decrement 50",
+        "timers": {
+          "default_hello": "3 seconds",
+          "default_hold": "10 seconds",
+          "aggressive": "hello 200ms, hold 600ms (with BFD)",
+          "bfd_integration": "standby bfd"
+        }
+      }
+    },
+    "platforms": {
+      "catalyst_9300": {
+        "description": "Stackable access layer switches",
+        "use_case": "Campus access layer, branch offices",
+        "stacking": "StackWise-480 (8 switches per stack)",
+        "uplinks": "4x1G or 4x10G modular uplink",
+        "features": ["802.1X", "MACSEC", "DNA Center manageable", "SD-Access"]
+      },
+      "catalyst_9400": {
+        "description": "Modular enterprise distribution switch",
+        "use_case": "Distribution layer, building aggregation",
+        "redundancy": "Dual supervisor (NSS), StackWise Virtual",
+        "uplinks": "100G capable with appropriate line cards",
+        "features": ["VSS equivalent via StackWise Virtual", "In-service software upgrade (ISSU)"]
+      },
+      "catalyst_9500": {
+        "description": "Fixed-configuration core switches",
+        "use_case": "Core layer, data center aggregation",
+        "models": {
+          "9500-24Q": "24x40G + 4x100G uplinks",
+          "9500-40X": "40x10G + 4x100G uplinks",
+          "9500-48Y4C": "48x25G + 4x100G uplinks"
+        },
+        "features": ["StackWise Virtual", "VXLAN/EVPN", "SD-Access border node"]
+      },
+      "nexus_9000": {
+        "description": "Data center switches",
+        "use_case": "Data center spine and leaf",
+        "models": {
+          "9336C-FX2": "36x100G (spine switch)",
+          "93180YC-FX": "48x25G + 6x100G (leaf switch)",
+          "9364C": "64x100G (large spine)"
+        },
+        "features": ["VXLAN/EVPN", "BGP EVPN", "Multi-site VXLAN", "ACI capable"]
+      },
+      "asr1000": {
+        "description": "WAN aggregation routers",
+        "use_case": "WAN edge, internet edge, service provider",
+        "models": {
+          "ASR1001-X": "Up to 20 Gbps, fixed form factor",
+          "ASR1002-HX": "Up to 100 Gbps, fixed high performance",
+          "ASR1006-X": "Modular, up to 200 Gbps"
+        }
+      }
+    }
+  },
+  "juniper": {
+    "routing_protocols": {
+      "bgp": {
+        "config_template": "protocols {\n  bgp {\n    group {group_name} {\n      type {internal|external};\n      local-address {loopback_ip};\n      neighbor {peer_ip} {\n        description {description};\n        authentication-key {password};\n        import [ {import_policy} ];\n        export [ {export_policy} ];\n      }\n    }\n  }\n}",
+        "policy_framework": "Juniper uses policy-statement with from/then structure for routing policies",
+        "commit_model": "Configuration changes staged in candidate config, then committed atomically"
+      },
+      "ospf": {
+        "config_template": "protocols {\n  ospf {\n    reference-bandwidth 100g;\n    area {area_id} {\n      interface {int} {\n        interface-type p2p;\n        authentication {\n          md5 1 key {password};\n        }\n        bfd-liveness-detection {\n          minimum-interval 300;\n          multiplier 3;\n        }\n      }\n    }\n  }\n}",
+        "best_practices": [
+          "Set reference-bandwidth to 100g for accurate cost on 10G+ interfaces",
+          "Use interface-type p2p on point-to-point links",
+          "BFD for fast failure detection",
+          "Passive interface equivalent: passive in interface config"
+        ]
+      }
+    },
+    "platforms": {
+      "qfx5120": {
+        "description": "Data center leaf switch",
+        "use_case": "Spine-leaf leaf layer, campus aggregation",
+        "features": ["BGP EVPN/VXLAN", "OpenConfig", "Junos Automation"],
+        "uplinks": "8x100G QSFP28 uplinks"
+      },
+      "qfx10002": {
+        "description": "High-performance spine switch",
+        "use_case": "Data center spine, service provider",
+        "capacity": "6.4 Tbps",
+        "features": ["Hardware VXLAN/EVPN", "Segment routing", "OpenConfig support"]
+      },
+      "mx480": {
+        "description": "Carrier-class router",
+        "use_case": "Service provider edge, enterprise WAN",
+        "features": ["MPLS", "BGP", "Full routing table", "Carrier-grade reliability"]
+      }
+    },
+    "junos_specifics": {
+      "configuration_model": "Hierarchical configuration, candidate config, atomic commits",
+      "rollback": "junos supports automatic rollback: rollback 1 (rollback to previous config)",
+      "commits": {
+        "standard": "commit (apply candidate config)",
+        "confirmed": "commit confirmed 5 (auto-rollback in 5 minutes if not confirmed)",
+        "check": "commit check (validate without applying)"
+      },
+      "operational_commands": {
+        "show_bgp": "show bgp summary / show bgp neighbor <ip>",
+        "show_ospf": "show ospf neighbor / show ospf interface",
+        "show_interfaces": "show interfaces terse / show interfaces detail"
+      }
+    }
+  },
+  "arista": {
+    "routing_protocols": {
+      "bgp": {
+        "config_template": "router bgp {as_number}\n  router-id {router_id}\n  neighbor {peer_ip} remote-as {peer_as}\n  neighbor {peer_ip} description {description}\n  neighbor {peer_ip} password {password}\n  address-family ipv4\n    neighbor {peer_ip} activate\n    neighbor {peer_ip} route-map FILTER-IN in\n    neighbor {peer_ip} route-map FILTER-OUT out",
+        "evpn_vxlan": "router bgp {as}\n  neighbor {spine_ip} remote-as {spine_as}\n  neighbor {spine_ip} update-source Loopback0\n  address-family evpn\n    neighbor {spine_ip} activate",
+        "note": "Arista EOS uses Cisco-like CLI (VEOS), making migration easier from Cisco"
+      }
+    },
+    "platforms": {
+      "7050cx3": {
+        "description": "Fixed spine/leaf switch",
+        "use_case": "Data center top-of-rack, campus distribution",
+        "ports": "32x100G QSFP28",
+        "features": ["VXLAN/EVPN", "OpenConfig", "CloudVision integration"]
+      },
+      "7280r3": {
+        "description": "Universal leaf/spine with deep buffer",
+        "use_case": "Financial trading (low latency), service provider",
+        "buffer": "12 GB deep buffer",
+        "features": ["MPLS", "Segment routing", "Sub-100ns timestamps"]
+      },
+      "7800r3": {
+        "description": "Modular spine switch",
+        "use_case": "Large data center spine, cloud provider",
+        "capacity": "345.6 Tbps total",
+        "features": ["Massive scale", "BGP EVPN", "Flexible consumption"]
+      },
+      "720xp": {
+        "description": "PoE campus access switch",
+        "use_case": "Campus access layer",
+        "poe": "Up to 90W per port (UPoE+)",
+        "features": ["CloudVision managed", "802.1X", "MACSEC-256"]
+      }
+    },
+    "eos_specifics": {
+      "cloudvision": {
+        "description": "Network-wide streaming telemetry and configuration management",
+        "features": [
+          "Change control workflow (rollback support)",
+          "Real-time telemetry streaming (gNMI/gRPC)",
+          "Network topology visualization",
+          "Compliance checking"
+        ]
+      },
+      "unique_features": {
+        "extensible_os": "EOS can run Linux processes in VRF (container-based extensions)",
+        "streaming_telemetry": "Native OpenConfig/gNMI support from day one",
+        "zero_touch_provisioning": "Automatic configuration via ZTP server"
+      }
+    }
+  },
+  "palo_alto": {
+    "firewall_platforms": {
+      "pa_220": {
+        "use_case": "Small branch office",
+        "throughput_firewall": "500 Mbps",
+        "throughput_threat_prevention": "200 Mbps",
+        "max_sessions": "64000"
+      },
+      "pa_3260": {
+        "use_case": "Internet edge, data center",
+        "throughput_firewall": "17 Gbps",
+        "throughput_threat_prevention": "12 Gbps",
+        "max_sessions": "4000000"
+      },
+      "pa_5450": {
+        "use_case": "Large enterprise internet edge",
+        "throughput_firewall": "120 Gbps",
+        "throughput_threat_prevention": "70 Gbps",
+        "max_sessions": "80000000",
+        "high_availability": "Active-active or active-passive"
+      },
+      "pa_7080": {
+        "use_case": "Service provider, large enterprise core",
+        "throughput_firewall": "620 Gbps",
+        "throughput_threat_prevention": "400 Gbps"
+      }
+    },
+    "zone_design": {
+      "template": "security zone design:\n  zones: [trust, untrust, dmz, mgmt]\n  policies: zone_to_zone with application-based rules\n  best_practice: deny all inter-zone by default, whitelist required",
+      "security_profiles": {
+        "antivirus": "Block known malware signatures",
+        "anti_spyware": "Block C2 traffic",
+        "vulnerability_protection": "Block known exploits",
+        "url_filtering": "Control web access by category",
+        "file_blocking": "Block dangerous file types",
+        "data_filtering": "Prevent data exfiltration"
+      }
+    }
+  },
+  "f5": {
+    "big_ip": {
+      "use_cases": [
+        "HTTP/HTTPS load balancing",
+        "SSL/TLS offloading",
+        "Application delivery controller",
+        "Web Application Firewall (ASM/AWAF)",
+        "DDoS mitigation (AFM)"
+      ],
+      "load_balancing_methods": [
+        "Round Robin",
+        "Least Connections",
+        "Fastest Response Time",
+        "Weighted Round Robin",
+        "Priority Group Activation"
+      ],
+      "ha_modes": {
+        "active_active": "Both process traffic, different virtual addresses",
+        "active_standby": "One processes, other standby with connection mirroring"
+      }
+    }
+  }
+}

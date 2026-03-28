@@ -1,0 +1,627 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-03-28",
+    "source": "CCDE-level industry standards and network architecture best practices",
+    "total_patterns": 47
+  },
+  "topology_patterns": {
+    "collapsed_core": {
+      "user_range": "50-2000",
+      "recommended_range": "100-1500",
+      "layers": 2,
+      "description": "Two-tier architecture combining core and distribution functions into a single layer. Access switches connect directly to core-distribution devices.",
+      "pros": [
+        "Lower cost - fewer devices required",
+        "Simpler management and troubleshooting",
+        "Reduced latency (fewer hops)",
+        "Faster convergence with fewer routing adjacencies",
+        "Lower power and rack space requirements",
+        "Suitable for single-building deployments"
+      ],
+      "cons": [
+        "Limited scalability beyond 2000 users",
+        "Single failure domain for routing",
+        "Less fault isolation between departments",
+        "No distribution layer for policy enforcement",
+        "Challenging to add redundancy at scale",
+        "Not suitable for multi-building campuses"
+      ],
+      "use_cases": [
+        "Branch offices (50-500 users)",
+        "Small to medium businesses",
+        "Single-floor or single-building deployments",
+        "Remote sites in a hub-and-spoke WAN",
+        "Retail locations",
+        "Healthcare clinics (not hospitals)"
+      ],
+      "typical_hardware": {
+        "core_switches": ["Cisco Catalyst 9300", "Cisco Catalyst 9500-24Q", "Arista 7050X"],
+        "access_switches": ["Cisco Catalyst 9200", "Cisco Catalyst 9300-24P", "Arista 720XP"]
+      },
+      "routing_protocols": ["OSPF", "EIGRP"],
+      "ha_options": ["HSRP", "VRRP", "VSS (Virtual Switching System)", "StackWise"],
+      "bandwidth_guidelines": {
+        "uplink_ratio": "1:20 (oversubscription)",
+        "core_capacity": "10-40 Gbps",
+        "access_uplinks": "1-10 Gbps"
+      },
+      "decision_criteria": {
+        "choose_when": [
+          "User count < 2000",
+          "Single building or small campus",
+          "Budget constrained",
+          "Simple department structure",
+          "Limited IT staff"
+        ],
+        "avoid_when": [
+          "Multi-building campus",
+          "High availability requirements (>99.99%)",
+          "Strict compliance isolation needed",
+          "Expecting growth beyond 3000 users"
+        ]
+      }
+    },
+    "three_tier": {
+      "user_range": "2000-100000",
+      "recommended_range": "5000-50000",
+      "layers": 3,
+      "description": "Three distinct layers: Core (high-speed backbone), Distribution (policy enforcement, routing), Access (user connectivity). Industry standard for enterprise campus networks.",
+      "pros": [
+        "Excellent scalability to 100,000+ users",
+        "Strong fault isolation between layers",
+        "Policy enforcement at distribution layer",
+        "Simplified troubleshooting per layer",
+        "Supports hierarchical routing design",
+        "Industry-proven for large enterprises",
+        "Modular - add distribution blocks without core changes"
+      ],
+      "cons": [
+        "Higher cost than collapsed core",
+        "More complex configuration and management",
+        "Additional network hops (latency)",
+        "Requires skilled networking staff",
+        "More physical devices and cabling"
+      ],
+      "use_cases": [
+        "Enterprise campus networks",
+        "University campuses",
+        "Multi-building corporate headquarters",
+        "Hospital networks",
+        "Government agency networks",
+        "Large retail chains (central DC)"
+      ],
+      "typical_hardware": {
+        "core_switches": ["Cisco Catalyst 9500-48Y4C", "Cisco Nexus 9364C", "Arista 7500R3"],
+        "distribution_switches": ["Cisco Catalyst 9400", "Cisco Catalyst 9500-32C", "Arista 7280R3"],
+        "access_switches": ["Cisco Catalyst 9200", "Cisco Catalyst 9300", "Arista 720XP"]
+      },
+      "routing_protocols": ["OSPF", "BGP (for multi-site)"],
+      "ha_options": ["VSS", "StackWise Virtual", "HSRP/VRRP at distribution", "BFD"],
+      "bandwidth_guidelines": {
+        "core_to_distribution": "40-100 Gbps",
+        "distribution_to_access": "10-40 Gbps",
+        "access_uplinks": "1-10 Gbps",
+        "oversubscription_ratio": "1:4 at distribution, 1:20 at access"
+      },
+      "decision_criteria": {
+        "choose_when": [
+          "User count > 2000",
+          "Multi-building or multi-floor campus",
+          "Need strong fault isolation",
+          "Compliance requirements (PCI-DSS, HIPAA)",
+          "Multiple departments with different security policies",
+          "Plans for significant growth"
+        ],
+        "avoid_when": [
+          "Pure data center environment (use spine-leaf)",
+          "Very small deployments (< 500 users)",
+          "Extremely cost-constrained"
+        ]
+      }
+    },
+    "spine_leaf": {
+      "user_range": "Data center workloads",
+      "server_range": "50-100000 servers",
+      "layers": 2,
+      "description": "Data center fabric architecture. Every leaf switch connects to every spine switch. No leaf-to-leaf connections. Provides uniform latency and horizontal scalability for east-west traffic.",
+      "pros": [
+        "Predictable, uniform latency (2 hops max)",
+        "Horizontal scalability - add spine or leaf without redesign",
+        "Excellent for east-west (server-to-server) traffic",
+        "No spanning tree - ECMP for load balancing",
+        "High bandwidth with multiple ECMP paths",
+        "Supports VXLAN/EVPN for overlay networks"
+      ],
+      "cons": [
+        "Not designed for campus user connectivity",
+        "More cable density than three-tier",
+        "Higher upfront cost for full mesh cabling",
+        "Adds complexity with VXLAN/EVPN overlay",
+        "Spine switches are high-density and expensive"
+      ],
+      "use_cases": [
+        "Enterprise data centers",
+        "Cloud provider data centers",
+        "Hyperscale computing environments",
+        "High-performance computing (HPC) clusters",
+        "Containerized application environments (Kubernetes)",
+        "Financial trading platforms (low latency)"
+      ],
+      "typical_hardware": {
+        "spine_switches": ["Cisco Nexus 9336C-FX2", "Arista 7800R3", "Juniper QFX10002"],
+        "leaf_switches": ["Cisco Nexus 93180YC-FX", "Arista 7050CX3", "Juniper QFX5120"]
+      },
+      "routing_protocols": ["BGP EVPN", "OSPF (underlay)", "iBGP/eBGP (overlay)"],
+      "overlay_technologies": ["VXLAN", "EVPN", "MPLS"],
+      "bandwidth_guidelines": {
+        "leaf_to_spine_uplinks": "25-400 Gbps per link",
+        "server_facing_ports": "10-100 Gbps",
+        "spine_capacity": "400 Gbps - 12.8 Tbps"
+      },
+      "design_rules": {
+        "max_leaf_count": "Limited by spine port count",
+        "spine_count": "Typically 2-4 for HA",
+        "oversubscription": "3:1 typical, 1:1 for HPC"
+      },
+      "decision_criteria": {
+        "choose_when": [
+          "Pure data center environment",
+          "High east-west traffic requirements",
+          "Need uniform low latency",
+          "Cloud-native workloads",
+          "Container/microservices architecture"
+        ],
+        "avoid_when": [
+          "Campus user network",
+          "WAN edge design",
+          "Small environments (< 10 servers)"
+        ]
+      }
+    },
+    "hub_and_spoke": {
+      "user_range": "Varies by hub size",
+      "site_range": "2-500 sites",
+      "description": "Centralized topology where remote sites (spokes) connect back to a central site (hub). All spoke-to-spoke traffic routes through hub.",
+      "pros": [
+        "Simple configuration",
+        "Centralized security policy enforcement",
+        "Cost-effective for many small sites",
+        "Easy to add new spoke sites"
+      ],
+      "cons": [
+        "Hub is single point of failure",
+        "Spoke-to-spoke latency (double hop)",
+        "Hub bandwidth can become bottleneck",
+        "Poor for real-time applications between spokes"
+      ],
+      "use_cases": [
+        "Retail chain networks",
+        "Bank branch networks",
+        "Small remote office connectivity",
+        "Legacy enterprise WAN"
+      ]
+    },
+    "full_mesh": {
+      "site_range": "2-6 sites",
+      "description": "Every site connects directly to every other site.",
+      "pros": [
+        "Optimal routing between any two sites",
+        "Excellent resilience",
+        "Lowest latency between sites"
+      ],
+      "cons": [
+        "Connection count grows exponentially (n*(n-1)/2)",
+        "Very expensive beyond 6 sites",
+        "Complex management"
+      ],
+      "use_cases": [
+        "Small number of critical data centers",
+        "Financial trading hub interconnects",
+        "Carrier-grade network interconnects"
+      ]
+    },
+    "partial_mesh": {
+      "site_range": "4-50 sites",
+      "description": "Key sites fully connected, less critical sites using hub-and-spoke.",
+      "pros": [
+        "Balance of cost and performance",
+        "Critical paths fully redundant",
+        "Manageable complexity"
+      ],
+      "cons": [
+        "More complex design decisions",
+        "Some sites have suboptimal routing"
+      ],
+      "use_cases": [
+        "Regional enterprise networks",
+        "Mid-size service provider networks"
+      ]
+    }
+  },
+  "wan_patterns": {
+    "mpls": {
+      "description": "Multiprotocol Label Switching - carrier-managed Layer 2.5 service providing private WAN connectivity with traffic engineering capabilities.",
+      "type": "Private WAN",
+      "pros": [
+        "Guaranteed SLAs (latency, jitter, packet loss)",
+        "Quality of Service (QoS) with traffic classes",
+        "Private network - no internet exposure",
+        "Provider-managed infrastructure",
+        "Sub-50ms failover with Fast Reroute",
+        "MPLS TE for traffic engineering"
+      ],
+      "cons": [
+        "High cost - typically 5-10x internet pricing",
+        "Long provisioning lead times (30-90 days)",
+        "Limited geographic availability",
+        "Locked to single carrier",
+        "Not cloud-optimized"
+      ],
+      "use_cases": [
+        "Financial services (trading, banking)",
+        "Healthcare critical applications",
+        "Voice/video conferencing primary transport",
+        "Legacy application connectivity"
+      ],
+      "typical_bandwidth": "10 Mbps - 10 Gbps",
+      "latency_guarantee": "< 50ms intra-country",
+      "availability_sla": "99.9-99.99%"
+    },
+    "sd_wan": {
+      "description": "Software-Defined WAN - overlay technology abstracting transport and applying intelligent traffic steering across multiple underlying connections.",
+      "type": "Overlay on multiple transports",
+      "pros": [
+        "Transport agnostic (MPLS, internet, LTE, 5G)",
+        "Centralized management via controller",
+        "Application-aware routing (SaaS optimization)",
+        "Zero-touch provisioning",
+        "Lower cost vs pure MPLS",
+        "Built-in security (IPSec overlay)",
+        "Cloud on-ramp for SaaS/IaaS"
+      ],
+      "cons": [
+        "Complexity in design and operation",
+        "Internet transport quality variable",
+        "Additional overlay overhead",
+        "Requires new skill sets",
+        "Vendor lock-in potential"
+      ],
+      "use_cases": [
+        "Multi-site enterprises (10+ sites)",
+        "Direct internet access for SaaS (Office 365, Salesforce)",
+        "Cloud connectivity optimization",
+        "Cost reduction from MPLS migration",
+        "Branch office modernization"
+      ],
+      "vendors": ["Cisco Viptela/Catalyst SD-WAN", "VMware VeloCloud", "Silver Peak (HPE Aruba)", "Fortinet SD-WAN", "Palo Alto Prisma SD-WAN"],
+      "transport_types": ["MPLS", "Internet (broadband)", "4G/LTE", "5G", "Satellite (VSAT)"],
+      "traffic_steering": {
+        "sla_aware": "Steer based on measured latency/loss/jitter",
+        "application_aware": "Recognize apps by DPI and apply policies",
+        "cloud_optimized": "Direct breakout for trusted SaaS"
+      }
+    },
+    "dmvpn": {
+      "description": "Dynamic Multipoint VPN - Cisco technology enabling dynamic spoke-to-spoke tunnels with centralized hub management.",
+      "type": "Overlay VPN",
+      "pros": [
+        "Dynamic spoke-to-spoke tunnels (no hub bottleneck)",
+        "Cisco-standard, widely deployed",
+        "NHRP for dynamic peer discovery",
+        "Works over any IP transport",
+        "Supports multicast/routing protocols natively"
+      ],
+      "cons": [
+        "Cisco-centric (not multi-vendor)",
+        "Complex troubleshooting",
+        "NHRP adds complexity",
+        "Being replaced by SD-WAN"
+      ],
+      "use_cases": [
+        "Legacy Cisco WAN deployments",
+        "Government networks (GRE-based)",
+        "Cost-effective hub-and-spoke with spoke breakout"
+      ],
+      "phases": {
+        "phase1": "Hub-and-spoke only, no direct spoke tunnels",
+        "phase2": "Dynamic spoke-to-spoke tunnels (NHRP shortcut)",
+        "phase3": "Multicast support, NHRP redirect"
+      }
+    },
+    "internet_vpn": {
+      "description": "IPSec VPN over public internet - cost-effective but variable quality.",
+      "type": "Public WAN overlay",
+      "pros": [
+        "Low cost",
+        "Widely available",
+        "Quick provisioning",
+        "High bandwidth options"
+      ],
+      "cons": [
+        "Variable latency and packet loss",
+        "No SLA guarantees",
+        "Best-effort quality",
+        "Security depends on IPSec implementation"
+      ],
+      "use_cases": [
+        "Small business WAN",
+        "Backup transport for MPLS",
+        "Non-critical application access",
+        "Remote worker connectivity"
+      ]
+    },
+    "hybrid_wan": {
+      "description": "Combination of MPLS and internet (often with SD-WAN) to balance cost and performance.",
+      "type": "Multi-transport",
+      "pros": [
+        "Cost optimization (80% internet, 20% MPLS)",
+        "QoS for critical apps on MPLS",
+        "Internet for SaaS/cloud traffic",
+        "Redundancy across transport types"
+      ],
+      "transport_split": {
+        "mpls_traffic": "ERP, voice, video, trading systems",
+        "internet_traffic": "SaaS (Office 365, Salesforce), web browsing, backup"
+      }
+    }
+  },
+  "security_patterns": {
+    "zero_trust": {
+      "description": "Security model based on 'never trust, always verify'. No implicit trust based on network location. Every access request verified regardless of source.",
+      "principles": [
+        "Verify explicitly - always authenticate and authorize based on all available data points",
+        "Use least privilege access - limit user access with just-in-time and just-enough-access",
+        "Assume breach - minimize blast radius, encrypt all sessions, use analytics to get visibility"
+      ],
+      "components": {
+        "identity": "Azure AD, Okta, Duo - MFA required for all access",
+        "devices": "Device compliance check before access (MDM/EDR)",
+        "applications": "Per-application authorization, no network-wide access",
+        "data": "Data classification, DLP, encryption at rest and in transit",
+        "infrastructure": "Micro-segmentation, just-in-time access",
+        "network": "Encrypted sessions, network analytics, threat detection"
+      },
+      "implementation_sequence": [
+        "1. Identity - Deploy MFA (Microsoft Authenticator, Duo)",
+        "2. Endpoints - MDM enrollment (Intune, JAMF), EDR deployment",
+        "3. Network - Micro-segmentation, east-west firewall",
+        "4. Applications - Per-app conditional access policies",
+        "5. Data - Classification and DLP policies",
+        "6. Analytics - SIEM, UEBA, threat intelligence"
+      ],
+      "vendors": {
+        "identity": ["Microsoft Entra ID", "Okta", "Ping Identity"],
+        "network": ["Palo Alto Prisma Access", "Zscaler ZPA", "Cisco Umbrella"],
+        "endpoint": ["CrowdStrike", "Microsoft Defender", "SentinelOne"]
+      }
+    },
+    "defense_in_depth": {
+      "description": "Multiple overlapping security layers so that if one layer fails, others remain in place.",
+      "layers": [
+        {
+          "layer": 1,
+          "name": "Perimeter Security",
+          "technologies": ["NGFW", "IPS/IDS", "DDoS mitigation", "WAF"],
+          "purpose": "Block external threats before they reach internal network"
+        },
+        {
+          "layer": 2,
+          "name": "Network Segmentation",
+          "technologies": ["VLANs", "ACLs", "Firewall zones", "NAC"],
+          "purpose": "Limit lateral movement once perimeter is breached"
+        },
+        {
+          "layer": 3,
+          "name": "Endpoint Protection",
+          "technologies": ["EDR/XDR", "Host-based firewall", "Application whitelisting"],
+          "purpose": "Protect individual devices from compromise"
+        },
+        {
+          "layer": 4,
+          "name": "Application Security",
+          "technologies": ["WAF", "API gateway", "Code scanning", "DAST/SAST"],
+          "purpose": "Protect applications from exploitation"
+        },
+        {
+          "layer": 5,
+          "name": "Data Protection",
+          "technologies": ["Encryption at rest", "DLP", "Data classification", "Rights management"],
+          "purpose": "Protect sensitive data even if other layers breached"
+        },
+        {
+          "layer": 6,
+          "name": "Identity and Access",
+          "technologies": ["MFA", "PAM", "IAM", "Just-in-time access"],
+          "purpose": "Ensure only authorized users access resources"
+        },
+        {
+          "layer": 7,
+          "name": "Monitoring and Response",
+          "technologies": ["SIEM", "SOAR", "NDR", "Threat intelligence"],
+          "purpose": "Detect, respond to, and recover from incidents"
+        }
+      ]
+    },
+    "micro_segmentation": {
+      "description": "Fine-grained network segmentation extending beyond VLANs to workload-level isolation. Prevents lateral movement of threats.",
+      "approaches": {
+        "network_based": {
+          "description": "VLAN/subnet-based with distributed firewall policies",
+          "technologies": ["Cisco ACI", "VMware NSX-T", "Arista CloudVision"],
+          "granularity": "Per workload/VM"
+        },
+        "host_based": {
+          "description": "Software firewall on each host",
+          "technologies": ["Windows Firewall", "iptables", "Illumio", "Guardicore"],
+          "granularity": "Per process/application"
+        },
+        "overlay_based": {
+          "description": "Microsegmentation through encrypted overlay",
+          "technologies": ["Zscaler Private Access", "Palo Alto Prisma Access"],
+          "granularity": "Per application"
+        }
+      },
+      "use_cases": [
+        "PCI-DSS cardholder data environment isolation",
+        "Healthcare PHI data segmentation (HIPAA)",
+        "Ransomware blast radius limitation",
+        "Development/Production environment separation"
+      ]
+    },
+    "dmz_architecture": {
+      "description": "Demilitarized Zone - network segment between internet and internal network hosting public-facing services.",
+      "zones": {
+        "internet": "Untrusted - all traffic",
+        "dmz": "Semi-trusted - web servers, email, DNS, VPN concentrators",
+        "internal": "Trusted - internal applications, databases",
+        "secure": "Highly restricted - PCI/HIPAA data, privileged management"
+      },
+      "firewall_policy": {
+        "internet_to_dmz": "Allow specific services (80, 443, 25)",
+        "dmz_to_internal": "Deny all by default, whitelist required",
+        "internal_to_dmz": "Allow management traffic",
+        "internal_to_internet": "Proxy/inspect all egress"
+      }
+    }
+  },
+  "ha_patterns": {
+    "active_active": {
+      "description": "Both nodes processing traffic simultaneously. Load distributed across nodes. Failover is seamless.",
+      "pros": [
+        "Maximum resource utilization",
+        "Seamless failover (no traffic interruption)",
+        "Linear capacity scaling",
+        "Better performance under normal operations"
+      ],
+      "cons": [
+        "Complex configuration (state synchronization)",
+        "More expensive (both nodes fully licensed)",
+        "State synchronization latency",
+        "Harder to troubleshoot"
+      ],
+      "use_cases": [
+        "Load balancers (F5, Citrix)",
+        "Firewalls with session synchronization",
+        "BGP route reflectors",
+        "Web application servers"
+      ],
+      "technologies": ["ECMP routing", "Anycast", "F5 Active-Active", "Palo Alto Active-Active"],
+      "rto_rpo": {
+        "rto": "< 1 second (sub-second failover)",
+        "rpo": "0 (no data loss)"
+      }
+    },
+    "active_standby": {
+      "description": "Primary node handles all traffic; standby node monitors and takes over on failure.",
+      "pros": [
+        "Simpler configuration",
+        "Lower risk of split-brain",
+        "Easier troubleshooting",
+        "Standard approach for firewalls"
+      ],
+      "cons": [
+        "Standby resources idle under normal conditions",
+        "Failover time (5-30 seconds typical)",
+        "Session loss on failover without sync"
+      ],
+      "use_cases": [
+        "Firewalls (Cisco ASA, Palo Alto, Fortinet)",
+        "Routers (HSRP, VRRP, GLBP)",
+        "Database servers",
+        "Critical infrastructure with simple traffic patterns"
+      ],
+      "failover_times": {
+        "hsrp_default": "10-30 seconds",
+        "hsrp_optimized": "1-3 seconds (sub-second with BFD)",
+        "vrrp_default": "Master Down Interval (3x advertisement interval)",
+        "bgp_bfd": "< 1 second"
+      }
+    },
+    "n_plus_1": {
+      "description": "N active nodes with 1 spare available to replace any failed node.",
+      "capacity_loss_on_failure": "1/N of capacity (briefly until failover)",
+      "use_cases": [
+        "Server clusters",
+        "Network device pools",
+        "Power systems"
+      ],
+      "examples": [
+        "3 active switches + 1 spare",
+        "5 servers + 1 spare in cluster",
+        "RAID-5 disk arrays"
+      ]
+    },
+    "n_plus_2": {
+      "description": "N active nodes with 2 spares. Tolerates 2 simultaneous failures.",
+      "use_cases": [
+        "Mission-critical systems",
+        "Financial trading systems",
+        "Hospital life safety systems"
+      ],
+      "cost": "Higher than N+1, justified for <99.999% uptime requirements"
+    },
+    "geo_redundancy": {
+      "description": "Active-active or active-standby data centers in different geographic locations.",
+      "patterns": {
+        "active_active_dc": {
+          "description": "Both DCs serve traffic simultaneously",
+          "technologies": ["GSLB", "Anycast", "Active-Active WAN"],
+          "rto": "< 1 second",
+          "distance_requirement": "> 100 miles for disaster recovery"
+        },
+        "active_standby_dc": {
+          "description": "Primary DC serves all traffic, DR DC activates on disaster",
+          "technologies": ["DNS failover", "BGP anycast", "Warm standby"],
+          "rto": "5-30 minutes",
+          "distance_requirement": "> 300 miles for major disaster scenarios"
+        }
+      },
+      "rpo_rto_requirements": {
+        "tier1_mission_critical": {"rpo": "0", "rto": "< 1 minute"},
+        "tier2_business_critical": {"rpo": "< 1 hour", "rto": "< 4 hours"},
+        "tier3_important": {"rpo": "< 24 hours", "rto": "< 8 hours"},
+        "tier4_non_critical": {"rpo": "< 7 days", "rto": "< 72 hours"}
+      }
+    }
+  },
+  "data_center_patterns": {
+    "pod_based": {
+      "description": "Modular data center design where infrastructure deployed in standardized pods/blocks",
+      "pod_sizes": {
+        "small_pod": "2 spine + 8 leaf, 500-1000 servers",
+        "medium_pod": "4 spine + 16 leaf, 2000-4000 servers",
+        "large_pod": "8 spine + 48 leaf, 10000+ servers"
+      },
+      "benefits": [
+        "Predictable capacity planning",
+        "Consistent latency across pods",
+        "Easy expansion (add pods)",
+        "Fault domain isolation"
+      ]
+    },
+    "edge_data_center": {
+      "description": "Small distributed DCs close to users/IoT devices for low-latency processing",
+      "characteristics": {
+        "size": "10-100 rack units",
+        "location": "Telecom facilities, office buildings, factories",
+        "latency_target": "< 5ms to end users",
+        "management": "Centralized management, local automation"
+      }
+    }
+  },
+  "wireless_patterns": {
+    "centralized_wlan": {
+      "description": "Wireless LAN controller (WLC) manages all APs centrally",
+      "pros": ["Centralized management", "Roaming optimization", "Consistent policy"],
+      "cons": ["WLC is single point of failure if not redundant", "All traffic through WLC"],
+      "vendors": ["Cisco WLC 9800", "Aruba ClearPass + Mobility Master", "Extreme Networks"]
+    },
+    "cloud_managed_wlan": {
+      "description": "Cloud-based management plane, local forwarding",
+      "pros": ["Zero-touch provisioning", "Automatic updates", "Multi-site management"],
+      "cons": ["Internet dependency", "Subscription cost", "Data sovereignty concerns"],
+      "vendors": ["Cisco Meraki", "Aruba Central", "Juniper Mist (AI-driven)"]
+    }
+  }
+}

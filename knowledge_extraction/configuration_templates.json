@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-03-28",
+    "source": "Cisco IOS/IOS-XE/NX-OS, Junos, and EOS configuration best practices"
+  },
+  "bgp_templates": {
+    "cisco_ebgp_peer": {
+      "description": "Basic eBGP peer configuration with MD5 authentication and prefix filtering",
+      "platform": "Cisco IOS-XE",
+      "config": "router bgp {LOCAL_AS}\n  bgp router-id {LOOPBACK_IP}\n  bgp log-neighbor-changes\n  no auto-summary\n  !\n  neighbor {PEER_IP} remote-as {PEER_AS}\n  neighbor {PEER_IP} description {PEER_DESCRIPTION}\n  neighbor {PEER_IP} password 7 {ENCRYPTED_PASSWORD}\n  neighbor {PEER_IP} update-source Loopback0\n  neighbor {PEER_IP} ebgp-multihop 2\n  neighbor {PEER_IP} timers 5 15\n  !\n  address-family ipv4\n    neighbor {PEER_IP} activate\n    neighbor {PEER_IP} soft-reconfiguration inbound\n    neighbor {PEER_IP} prefix-list PFX-IN-{PEER_NAME} in\n    neighbor {PEER_IP} prefix-list PFX-OUT-{PEER_NAME} out\n    neighbor {PEER_IP} maximum-prefix 100 80 warning-only\n    network {LOCAL_PREFIX} mask {LOCAL_MASK}",
+      "prefix_list_template": "ip prefix-list PFX-IN-{PEER_NAME} permit {EXPECTED_PREFIX}/{LEN}\nip prefix-list PFX-IN-{PEER_NAME} deny 0.0.0.0/0 le 32"
+    },
+    "cisco_ibgp_route_reflector": {
+      "description": "iBGP Route Reflector configuration",
+      "platform": "Cisco IOS-XE",
+      "config": "router bgp {AS_NUMBER}\n  bgp router-id {RR_LOOPBACK}\n  bgp cluster-id {CLUSTER_ID}\n  !\n  neighbor IBGP-CLIENTS peer-group\n  neighbor IBGP-CLIENTS remote-as {AS_NUMBER}\n  neighbor IBGP-CLIENTS update-source Loopback0\n  neighbor IBGP-CLIENTS route-reflector-client\n  neighbor IBGP-CLIENTS password 7 {PASSWORD}\n  !\n  neighbor {CLIENT1_IP} peer-group IBGP-CLIENTS\n  neighbor {CLIENT1_IP} description {CLIENT1_NAME}\n  neighbor {CLIENT2_IP} peer-group IBGP-CLIENTS\n  neighbor {CLIENT2_IP} description {CLIENT2_NAME}\n  !\n  address-family ipv4\n    neighbor IBGP-CLIENTS activate\n    neighbor IBGP-CLIENTS next-hop-self"
+    },
+    "bgp_communities": {
+      "description": "BGP community-based traffic engineering",
+      "config": "ip bgp-community new-format\n!\nroute-map SET-COMMUNITY permit 10\n  set community {ASN}:{VALUE} additive\n!\nroute-map FILTER-ON-COMMUNITY permit 10\n  match community COMM-LIST-IN\n  set local-preference 150\nroute-map FILTER-ON-COMMUNITY permit 20\n!\nip community-list standard COMM-LIST-IN permit {ASN}:{VALUE}"
+    }
+  },
+  "ospf_templates": {
+    "cisco_ospf_area": {
+      "description": "OSPF area configuration with authentication and BFD",
+      "platform": "Cisco IOS-XE",
+      "config": "router ospf {PROCESS_ID}\n  router-id {ROUTER_ID}\n  auto-cost reference-bandwidth 100000\n  area 0 authentication message-digest\n  passive-interface default\n  no passive-interface GigabitEthernet0/0/0\n  no passive-interface GigabitEthernet0/0/1\n  !\ninterface GigabitEthernet0/0/0\n  description Link to Distribution-1\n  ip address {IP} {MASK}\n  ip ospf {PROCESS_ID} area {AREA}\n  ip ospf authentication message-digest\n  ip ospf message-digest-key 1 md5 {PASSWORD}\n  ip ospf network point-to-point\n  ip ospf bfd\n  bfd interval 300 min_rx 300 multiplier 3"
+    },
+    "ospf_summarization": {
+      "description": "ABR route summarization to reduce LSA count",
+      "config": "router ospf {PROCESS_ID}\n  area {AREA_ID} range {SUMMARY_PREFIX} {SUMMARY_MASK}\n  area {AREA_ID} range {SUMMARY_PREFIX2} {SUMMARY_MASK2} not-advertise  ! Suppress specific range"
+    }
+  },
+  "hsrp_vrrp_glbp": {
+    "hsrp_v2": {
+      "description": "HSRP Version 2 with preemption and interface tracking",
+      "platform": "Cisco IOS-XE",
+      "primary_config": "interface Vlan{VLAN_ID}\n  description {VLAN_DESCRIPTION}\n  ip address {PRIMARY_SVI_IP} {MASK}\n  standby version 2\n  standby {GROUP} ip {VIRTUAL_IP}\n  standby {GROUP} priority 150\n  standby {GROUP} preempt delay minimum 60 reload 180\n  standby {GROUP} authentication md5 key-string {KEY}\n  standby {GROUP} track GigabitEthernet1/0/1 decrement 60\n  standby {GROUP} track GigabitEthernet1/0/2 decrement 60\n  no ip proxy-arp",
+      "secondary_config": "interface Vlan{VLAN_ID}\n  ip address {SECONDARY_SVI_IP} {MASK}\n  standby version 2\n  standby {GROUP} ip {VIRTUAL_IP}\n  standby {GROUP} priority 100\n  standby {GROUP} preempt delay minimum 60\n  standby {GROUP} authentication md5 key-string {KEY}"
+    },
+    "vrrp_v3": {
+      "description": "VRRPv3 configuration (RFC 5798, supports IPv4 and IPv6)",
+      "config": "interface Vlan{VLAN_ID}\n  ip address {IP} {MASK}\n  vrrp {GROUP} address-family ipv4\n    address {VIRTUAL_IP} primary\n    priority {PRIORITY}\n    preempt\n    timers advertise 1000  ! 1 second in milliseconds\n    track object UPLINK decrement 50",
+      "track_config": "track 1 interface GigabitEthernet1/0/1 line-protocol\ntrack 2 interface GigabitEthernet1/0/2 line-protocol\ntrack 10 list boolean and\n  object 1\n  object 2"
+    },
+    "glbp": {
+      "description": "GLBP - load balances across multiple gateways (Cisco proprietary)",
+      "config": "interface Vlan{VLAN_ID}\n  ip address {IP} {MASK}\n  glbp {GROUP} ip {VIRTUAL_IP}\n  glbp {GROUP} priority 150\n  glbp {GROUP} preempt\n  glbp {GROUP} load-balancing round-robin  ! or: host-dependent, weighted"
+    }
+  },
+  "qos_templates": {
+    "cisco_qos_policy": {
+      "description": "Enterprise QoS policy with voice, video, critical apps, and scavenger classes",
+      "platform": "Cisco IOS-XE",
+      "class_maps": "class-map match-any VOICE\n  match dscp ef\n  match dscp cs5\nclass-map match-any VIDEO\n  match dscp af41\n  match dscp af42\n  match dscp af43\nclass-map match-any CRITICAL-APPS\n  match dscp af31\n  match dscp af32\n  match dscp af33\nclass-map match-any SCAVENGER\n  match dscp cs1\n  match protocol bittorrent\nclass-map match-any NETWORK-CONTROL\n  match dscp cs6\n  match dscp cs7",
+      "policy_map": "policy-map EGRESS-QOS\n  class NETWORK-CONTROL\n    bandwidth percent 5\n  class VOICE\n    priority percent 20\n    set dscp ef\n  class VIDEO\n    bandwidth percent 15\n    set dscp af41\n    random-detect dscp-based\n  class CRITICAL-APPS\n    bandwidth percent 25\n    set dscp af31\n    random-detect dscp-based\n  class SCAVENGER\n    bandwidth percent 1\n    set dscp cs1\n  class class-default\n    bandwidth percent 34\n    set dscp default\n    random-detect",
+      "interface_apply": "interface GigabitEthernet0/0/0\n  service-policy output EGRESS-QOS"
+    },
+    "ingress_marking": {
+      "description": "DSCP marking at network ingress (trust boundary)",
+      "config": "class-map match-all VOICE-SIGNALING\n  match protocol skinny\n  match protocol sip\nclass-map match-all VOICE-MEDIA\n  match protocol rtp audio\nclass-map match-all VIDEO-CONFERENCING\n  match protocol rtp video\n!\npolicy-map INGRESS-MARKING\n  class VOICE-MEDIA\n    set dscp ef\n  class VIDEO-CONFERENCING\n    set dscp af41\n  class VOICE-SIGNALING\n    set dscp cs3\n  class class-default\n    set dscp default"
+    }
+  },
+  "acl_templates": {
+    "pci_dss_cde_acl": {
+      "description": "ACL implementing PCI-DSS CDE isolation - Requirement 1.3",
+      "platform": "Cisco IOS-XE",
+      "config": "! ACL to permit only necessary traffic to CDE\nip access-list extended PERMIT-TO-CDE\n  ! Permit authorized admin access\n  permit tcp {ADMIN_SUBNET} {ADMIN_WILDCARD} {CDE_SUBNET} {CDE_WILDCARD} eq 22\n  permit tcp {ADMIN_SUBNET} {ADMIN_WILDCARD} {CDE_SUBNET} {CDE_WILDCARD} eq 443\n  ! Permit application servers to CDE database\n  permit tcp {APP_SERVER_SUBNET} {APP_WILDCARD} {CDE_SUBNET} {CDE_WILDCARD} eq 1433\n  permit tcp {APP_SERVER_SUBNET} {APP_WILDCARD} {CDE_SUBNET} {CDE_WILDCARD} eq 5432\n  ! Permit NTP, SYSLOG from CDE to infrastructure\n  permit udp {CDE_SUBNET} {CDE_WILDCARD} {NTP_SERVER} 0.0.0.0 eq 123\n  permit udp {CDE_SUBNET} {CDE_WILDCARD} {SYSLOG_SERVER} 0.0.0.0 eq 514\n  ! Explicit deny and log all other traffic\n  deny ip any any log\n!\nip access-list extended PERMIT-FROM-CDE\n  ! Deny direct internet access from CDE (PCI Req 1.3.2)\n  deny ip {CDE_SUBNET} {CDE_WILDCARD} any log\n  ! Only permit traffic to authorized destinations\n  permit tcp {CDE_SUBNET} {CDE_WILDCARD} {PAYMENT_GATEWAY} 0.0.0.0 eq 443\n  permit tcp {CDE_SUBNET} {CDE_WILDCARD} {AUTHORIZED_MGMT} {MGMT_WILDCARD} eq 443\n  deny ip any any log",
+      "vlan_application": "interface Vlan{CDE_VLAN}\n  ip access-group PERMIT-TO-CDE in\n  ip access-group PERMIT-FROM-CDE out"
+    },
+    "internet_edge_acl": {
+      "description": "Internet edge inbound ACL - deny bogons and RFC1918",
+      "config": "ip access-list extended INTERNET-INBOUND\n  ! Deny bogon networks (RFC 5735)\n  deny ip 0.0.0.0 0.255.255.255 any log\n  deny ip 127.0.0.0 0.255.255.255 any log\n  deny ip 10.0.0.0 0.255.255.255 any log\n  deny ip 172.16.0.0 0.15.255.255 any log\n  deny ip 192.168.0.0 0.0.255.255 any log\n  deny ip 169.254.0.0 0.0.255.255 any log\n  deny ip 192.0.2.0 0.0.0.255 any log\n  deny ip 198.18.0.0 0.1.255.255 any log\n  deny ip 198.51.100.0 0.0.0.255 any log\n  deny ip 203.0.113.0 0.0.0.255 any log\n  deny ip 224.0.0.0 31.255.255.255 any log\n  ! Permit established TCP and ICMP\n  permit tcp any any established\n  permit icmp any any echo-reply\n  permit icmp any any unreachable\n  permit icmp any any time-exceeded\n  ! Permit specific inbound services to DMZ\n  permit tcp any {DMZ_WEB_SERVER} 0.0.0.0 eq 443\n  permit tcp any {DMZ_WEB_SERVER} 0.0.0.0 eq 80\n  permit tcp any {DMZ_MAIL_SERVER} 0.0.0.0 eq 25\n  ! Deny everything else and log\n  deny ip any any log"
+    }
+  },
+  "nxos_vxlan_evpn": {
+    "description": "NX-OS VXLAN/EVPN spine-leaf configuration",
+    "spine_config": "feature bgp\nfeature pim\n!\nvlan 1-4094\n!\nroute-map NEXT-HOP-UNCH permit 10\n  set ip next-hop unchanged\n!\nrouter bgp {SPINE_AS}\n  router-id {SPINE_LOOPBACK}\n  address-family l2vpn evpn\n    nexthop route-map NEXT-HOP-UNCH\n    retain route-target all\n  !\n  neighbor {LEAF1_VTEP}\n    remote-as {LEAF_AS}\n    update-source loopback0\n    address-family ipv4 unicast\n      send-community extended\n      route-reflector-client\n    address-family l2vpn evpn\n      send-community extended\n      route-reflector-client",
+    "leaf_config": "feature bgp\nfeature vn-segment-vlan-based\nfeature nv overlay\n!\nvlan {TENANT_VLAN}\n  vn-segment {VNI}\n!\ninterface nve1\n  no shutdown\n  host-reachability protocol bgp\n  source-interface loopback1\n  member vni {VNI}\n    ingress-replication protocol bgp\n!\nevpn\n  vni {VNI} l2\n    rd auto\n    route-target import auto\n    route-target export auto\n!\nrouter bgp {LEAF_AS}\n  router-id {LEAF_LOOPBACK}\n  neighbor {SPINE1_IP}\n    remote-as {SPINE_AS}\n    update-source loopback0\n    address-family ipv4 unicast\n      send-community extended\n    address-family l2vpn evpn\n      send-community extended"
+  }
+}

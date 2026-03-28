@@ -1,0 +1,57 @@
+# Dataset Generation Configuration
+# Phi-4 Network Architect Training Data
+
+generation:
+  total_samples: 10000
+  design_ratio: 0.70        # 7000 design, 3000 troubleshooting
+  random_seed: 42
+  batch_size: 10            # API calls per batch
+  rate_limit_pause: 1.0     # Seconds between batches
+
+quality_gates:
+  min_citations_per_sample: 5
+  min_reasoning_steps: 5
+  max_reasoning_steps: 15
+  require_valid_config_syntax: true
+  require_compliance_version: true
+  max_duplicate_ratio: 0.02  # Max 2% duplicates
+
+distribution:
+  design:
+    enterprise_campus: 2000
+    data_center: 1500
+    sd_wan: 1000
+    cloud_connectivity: 1000
+    security_architecture: 1500
+  troubleshooting:
+    routing_bgp_ospf: 1000
+    switching_vlan: 500
+    performance_qos: 500
+    security_firewall: 500
+    ha_redundancy: 500
+
+llm:
+  provider: "openai"
+  model: "gpt-4o-mini"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout: 120
+
+output:
+  dir: "generated_data"
+  train_file: "training_data.jsonl"
+  val_file: "validation_data.jsonl"
+  test_file: "test_data.jsonl"
+  splits:
+    train: 0.80
+    val: 0.10
+    test: 0.10
+
+# Compliance versions to use (exact)
+compliance_versions:
+  pci_dss: "4.0.1"
+  hipaa: "2013"
+  sox: "2002"
+  nist_csf: "2.0"
+  iso_27001: "2022"
+  fedramp: "Rev5"

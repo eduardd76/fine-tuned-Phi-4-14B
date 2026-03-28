@@ -1,0 +1,70 @@
+# Phi-4 14B Fine-Tuning Configuration
+# Target: Network Architect with CCDE-level reasoning
+# Hardware: RTX 4090 (24GB VRAM)
+
+model:
+  name: "microsoft/phi-4"
+  max_seq_length: 4096
+  load_in_4bit: true
+  dtype: null  # auto-detect (bfloat16 on Ampere+)
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0.05
+  bias: "none"
+  use_gradient_checkpointing: "unsloth"  # Unsloth optimized
+  random_state: 42
+  use_rslora: false
+  loftq_config: null
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+training:
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 16  # Effective batch = 16
+  warmup_steps: 100
+  num_train_epochs: 3
+  learning_rate: 1.0e-4
+  fp16: false
+  bf16: true  # Ampere+ (RTX 4090)
+  logging_steps: 25
+  eval_steps: 250
+  save_steps: 500
+  save_total_limit: 3
+  optim: "adamw_8bit"
+  weight_decay: 0.01
+  lr_scheduler_type: "cosine"
+  seed: 42
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  dataloader_num_workers: 0  # Windows compatibility
+
+# Reasoning-weighted loss: 2x weight on <think> tokens
+reasoning_loss:
+  enabled: true
+  think_token_weight: 2.0
+  think_start_token: "<think>"
+  think_end_token: "</think>"
+
+data:
+  train_file: "generated_data/training_data.jsonl"
+  val_file: "generated_data/validation_data.jsonl"
+  text_column: "text"
+  max_samples: null  # null = use all
+
+output:
+  dir: "models/phi4-network-architect"
+  hub_model_id: null  # Set to push to HuggingFace Hub
+  hub_token: null
+
+# Chat template for Phi-4
+chat_template: "phi4"
+# Format: <|system|>...<|end|>\n<|user|>...<|end|>\n<|assistant|>...<|end|>

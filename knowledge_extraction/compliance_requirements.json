@@ -1,0 +1,407 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-03-28",
+    "source": "Official compliance framework publications - PCI-DSS v4.0.1, HIPAA, SOX, NIST CSF 2.0"
+  },
+  "pci_dss": {
+    "version": "4.0.1",
+    "effective_date": "2024-03-31",
+    "applicable_to": "Any organization that accepts, processes, stores, or transmits cardholder data",
+    "network_requirements": {
+      "requirement_1": {
+        "title": "Install and Maintain Network Security Controls",
+        "sections": {
+          "1.1": {
+            "title": "Processes and mechanisms for network security controls are defined and understood",
+            "requirements": [
+              "All security controls documented with justification",
+              "Configuration standards for NSCs created and kept current",
+              "Roles and responsibilities assigned"
+            ]
+          },
+          "1.2": {
+            "title": "Network security controls (NSCs) are configured and maintained",
+            "requirements": [
+              "Changes to network connections reviewed and approved",
+              "Diagram of all connections between CDE and other networks maintained",
+              "All connections between CDE and other networks reviewed at least once every six months"
+            ],
+            "technical_controls": [
+              "Inbound and outbound traffic restricted to what is necessary",
+              "All other traffic denied by default",
+              "NSC configurations reviewed at least every six months"
+            ]
+          },
+          "1.3": {
+            "title": "Network access to and from the cardholder data environment is restricted",
+            "requirements": [
+              "Inbound traffic to CDE from untrusted networks restricted to only that necessary",
+              "Outbound traffic from CDE restricted to only that necessary",
+              "NSC connections between CDE and other networks prohibited except as necessary",
+              "All other traffic denied by default (default deny)"
+            ],
+            "specific_controls": {
+              "direct_internet_access": "Prohibited - no direct public access between internet and CDE (Req 1.3.2)",
+              "dmz_requirement": "All internet-facing services placed in DMZ separate from CDE",
+              "firewall_rules": "Document all deny rules, prohibit any-any rules",
+              "stateful_inspection": "NSCs must be stateful - track connection state"
+            }
+          },
+          "1.4": {
+            "title": "Network connections between trusted and untrusted networks are controlled",
+            "requirements": [
+              "NSCs implemented between all wireless networks and CDE",
+              "NSCs implemented between all untrusted networks and CDE",
+              "Traffic from wireless classified as untrusted unless appropriate controls in place"
+            ]
+          },
+          "1.5": {
+            "title": "Risks to CDE from computing devices able to connect to both untrusted networks and CDE are mitigated",
+            "requirements": [
+              "Security policy implemented for devices that can connect to both internet and CDE",
+              "Personal firewall or equivalent security software deployed",
+              "Security software not alterable by device users"
+            ]
+          }
+        }
+      },
+      "requirement_2": {
+        "title": "Apply Secure Configurations to All System Components",
+        "sections": {
+          "2.2": {
+            "title": "System components are configured and managed securely",
+            "requirements": [
+              "Configuration standards developed for all system component types",
+              "All default passwords changed before installation",
+              "Unnecessary functions, ports, protocols removed",
+              "One primary function per server (web server, DB server not combined unless virtualized)"
+            ]
+          }
+        }
+      }
+    },
+    "encryption_requirements": {
+      "in_transit": {
+        "requirement": "Strong cryptography for all data transmission over open public networks (Req 4.2.1)",
+        "minimum_standard": "TLS 1.2 (TLS 1.3 strongly recommended)",
+        "prohibited": ["SSL v3.0", "TLS 1.0", "TLS 1.1 (deprecated March 2022)"],
+        "cipher_suites": "Only strong cipher suites - AESGCM, ChaCha20-Poly1305",
+        "certificate_validation": "Server certificates validated before transmission"
+      },
+      "at_rest": {
+        "requirement": "Strong cryptography for PAN storage (Req 3.5.1)",
+        "options": [
+          "One-way hash of entire PAN (SHA-256 minimum)",
+          "Truncation (different truncated format)",
+          "Index tokens with secure pad in secure keystore",
+          "Strong cryptography: AES-256"
+        ],
+        "key_management": "Formal key management process required (Req 3.7)"
+      }
+    },
+    "logging_requirements": {
+      "requirement_10": {
+        "title": "Log and Monitor All Access to System Components and Cardholder Data",
+        "log_what": [
+          "All individual user access to cardholder data (Req 10.2.1.1)",
+          "All actions taken by root or administrative privileges (Req 10.2.1.2)",
+          "Access to all audit trails (Req 10.2.1.3)",
+          "Invalid logical access attempts (Req 10.2.1.4)",
+          "Use of and changes to identification and authentication mechanisms",
+          "Initialization, stopping, or pausing of audit logs (Req 10.2.1.6)",
+          "Creation and deletion of system-level objects (Req 10.2.1.7)"
+        ],
+        "retention": {
+          "minimum": "12 months",
+          "immediately_available": "3 months",
+          "note": "Logs must be protected from modification"
+        },
+        "time_sync": "All system clocks synchronized using NTP to trusted time sources"
+      }
+    },
+    "vulnerability_management": {
+      "requirement_11": {
+        "quarterly_scans": "External vulnerability scans by PCI-approved scanning vendor (ASV) quarterly",
+        "internal_scans": "Internal vulnerability scans at least quarterly and after significant changes",
+        "penetration_testing": {
+          "frequency": "At least once every 12 months",
+          "after_changes": "After significant infrastructure or application upgrade",
+          "scope": "External and internal penetration testing per PCI-defined methodology"
+        }
+      }
+    },
+    "cde_segmentation": {
+      "description": "Cardholder Data Environment must be isolated from other networks",
+      "requirements": [
+        "Documented network diagrams showing CDE scope",
+        "All connections to CDE controlled by NSC (firewall, router ACL)",
+        "Wireless networks treated as untrusted unless assessed and isolated",
+        "Segmentation verified at least every six months by qualified internal resource or ASV"
+      ],
+      "vlan_requirements": {
+        "cde_vlan": "Dedicated VLAN for cardholder data systems",
+        "access_control": "ACL or firewall between CDE VLAN and all other VLANs",
+        "monitoring": "All traffic to/from CDE logged and monitored"
+      }
+    }
+  },
+  "hipaa": {
+    "full_name": "Health Insurance Portability and Accountability Act",
+    "effective": "1996 (Privacy Rule 2003, Security Rule 2005, Breach Notification 2009, Omnibus 2013)",
+    "applicable_to": "Covered entities (healthcare providers, insurers, clearinghouses) and business associates",
+    "security_rule": {
+      "administrative_safeguards": {
+        "security_officer": "Designate security official responsible for policies and procedures",
+        "workforce_training": "Training program for all workforce members",
+        "access_management": {
+          "authorization": "Policies for granting access to PHI based on role",
+          "workforce_clearance": "Procedures to determine appropriate access",
+          "termination": "Remove access upon termination"
+        },
+        "incident_procedures": "Document and respond to suspected security incidents",
+        "contingency_plan": {
+          "data_backup": "Exact copy of ePHI procedures",
+          "disaster_recovery": "Restore loss of data in emergency",
+          "emergency_mode_operations": "Procedures to protect security of ePHI during emergency"
+        }
+      },
+      "physical_safeguards": {
+        "facility_access": "Procedures to limit physical access to ePHI",
+        "workstation_use": "Policies on workstation functions and physical attributes",
+        "device_controls": "Hardware and media containing ePHI",
+        "data_disposal": "Final disposition of ePHI and hardware/media",
+        "media_reuse": "Procedures to remove ePHI before reuse"
+      },
+      "technical_safeguards": {
+        "access_control": {
+          "unique_user_ids": "Assign unique name/number for identifying/tracking user identity",
+          "emergency_access": "Procedures to obtain ePHI during emergency",
+          "automatic_logoff": "Terminate electronic sessions after predetermined period of inactivity",
+          "encryption_decryption": "Mechanism to encrypt and decrypt ePHI (addressable)"
+        },
+        "audit_controls": {
+          "description": "Hardware, software, or procedural mechanisms that record and examine activity in systems containing ePHI",
+          "requirements": "Log access to ePHI - who accessed, when, what records"
+        },
+        "integrity": {
+          "mechanism": "Electronic mechanism to corroborate ePHI not altered or destroyed",
+          "transmission_security": "Guard against unauthorized access during transmission"
+        },
+        "transmission_security": {
+          "encryption": "Encryption of ePHI in transit - recommended (addressable)",
+          "standards": "TLS 1.2+ for ePHI transmission",
+          "vpn": "Encrypted VPN tunnels for ePHI across untrusted networks"
+        }
+      }
+    },
+    "network_requirements": {
+      "segmentation": {
+        "phi_systems": "Isolate systems containing PHI from general network",
+        "ehr_vlan": "Dedicated VLAN for EHR/EMR systems",
+        "medical_devices": "Separate VLAN for medical devices (FDA-regulated)",
+        "visitor_network": "Completely separate network for patient/visitor WiFi"
+      },
+      "encryption_standards": {
+        "at_rest": "AES-256 for ePHI at rest",
+        "in_transit": "TLS 1.2 minimum (TLS 1.3 recommended)",
+        "email": "S/MIME or PGP for ePHI in email",
+        "mobile_devices": "Full-device encryption for mobile devices with ePHI"
+      },
+      "access_controls": {
+        "authentication": "Multi-factor authentication recommended for ePHI access",
+        "minimum_necessary": "Users only access PHI required for their job function",
+        "audit_logging": "Log all access to PHI with user ID, date/time, action taken",
+        "remote_access": "VPN with MFA for remote access to systems with PHI"
+      }
+    },
+    "breach_notification": {
+      "timeline": {
+        "individual_notification": "60 days from discovery",
+        "hhs_notification": "60 days from end of calendar year (if < 500 individuals), 60 days from discovery (if >= 500)",
+        "media_notice": "Breaches >= 500 in a state - prominent media outlets in that state"
+      }
+    }
+  },
+  "sox": {
+    "full_name": "Sarbanes-Oxley Act",
+    "year": "2002",
+    "applicable_to": "Publicly traded companies in the United States",
+    "it_controls": {
+      "section_302": {
+        "title": "Corporate responsibility for financial reports",
+        "it_requirement": "CEOs and CFOs certify accuracy of financial statements - requires trusted IT systems"
+      },
+      "section_404": {
+        "title": "Management assessment of internal controls",
+        "requirement": "Annual assessment of effectiveness of internal control over financial reporting",
+        "it_general_controls": {
+          "access_controls": {
+            "logical_access": "Only authorized users access financial systems",
+            "privileged_access": "Segregation of duties - developers cannot access production",
+            "user_provisioning": "Formal process for granting, modifying, removing access",
+            "periodic_reviews": "Quarterly access reviews of all financial system users"
+          },
+          "change_management": {
+            "change_control": "All changes to financial systems go through formal change management",
+            "testing": "All changes tested in non-production before deployment",
+            "emergency_changes": "Emergency change process with post-implementation review",
+            "documentation": "All changes documented with approvals"
+          },
+          "it_operations": {
+            "backup_recovery": "Financial data backed up and recovery tested",
+            "job_scheduling": "Critical batch jobs monitored for success/failure",
+            "incident_management": "Incidents affecting financial systems tracked and resolved"
+          },
+          "systems_development": {
+            "sdlc": "Formal SDLC methodology with security requirements",
+            "code_review": "Code reviews for financial applications",
+            "testing": "Unit, integration, and user acceptance testing"
+          }
+        }
+      }
+    },
+    "audit_logging": {
+      "requirements": [
+        "Log all access to financial systems",
+        "Log all changes to financial data",
+        "Log all privileged actions",
+        "Logs immutable and tamper-evident",
+        "Retention minimum 7 years (documents) / 5 years (audit work papers)"
+      ],
+      "siem_requirements": {
+        "collection": "Central log collection from all financial systems",
+        "correlation": "Alert on unauthorized access attempts",
+        "retention": "Searchable for 7 years",
+        "integrity": "Hash-based log integrity verification"
+      }
+    },
+    "network_requirements": {
+      "segmentation": "Financial systems isolated from non-financial systems",
+      "access_control": "Network ACLs restricting access to financial systems by source IP",
+      "monitoring": "Network traffic to financial systems monitored and logged",
+      "remote_access": "All remote access to financial systems via MFA VPN"
+    }
+  },
+  "nist_csf": {
+    "version": "2.0",
+    "year": "2024",
+    "framework_functions": {
+      "govern": {
+        "description": "NEW in CSF 2.0 - Organizational context, risk management strategy, cybersecurity supply chain risk management",
+        "outcomes": [
+          "GV.OC: Organizational Context",
+          "GV.RM: Risk Management Strategy",
+          "GV.RR: Roles, Responsibilities, and Authorities",
+          "GV.PO: Policy",
+          "GV.OV: Oversight",
+          "GV.SC: Cybersecurity Supply Chain Risk Management"
+        ]
+      },
+      "identify": {
+        "description": "Asset management, business environment, governance, risk assessment, risk management strategy",
+        "outcomes": [
+          "ID.AM: Asset Management - inventory all hardware, software, data",
+          "ID.BE: Business Environment - critical functions and dependencies",
+          "ID.GV: Governance - policies and procedures",
+          "ID.RA: Risk Assessment - vulnerability assessment and threat analysis",
+          "ID.RM: Risk Management Strategy - risk tolerance and priorities",
+          "ID.SC: Supply Chain Risk Management"
+        ]
+      },
+      "protect": {
+        "description": "Identity management, awareness training, data security, information protection, maintenance",
+        "outcomes": [
+          "PR.AA: Identity Management and Access Control",
+          "PR.AT: Awareness and Training",
+          "PR.DS: Data Security",
+          "PR.IP: Information Protection Processes",
+          "PR.MA: Maintenance",
+          "PR.PT: Protective Technology"
+        ]
+      },
+      "detect": {
+        "description": "Anomalies and events, security monitoring, detection processes",
+        "outcomes": [
+          "DE.AE: Anomalies and Events",
+          "DE.CM: Continuous Monitoring",
+          "DE.DP: Detection Processes"
+        ]
+      },
+      "respond": {
+        "description": "Response planning, communications, analysis, mitigation, improvements",
+        "outcomes": [
+          "RS.RP: Response Planning",
+          "RS.CO: Communications",
+          "RS.AN: Analysis",
+          "RS.MI: Mitigation",
+          "RS.IM: Improvements"
+        ]
+      },
+      "recover": {
+        "description": "Recovery planning, improvements, communications",
+        "outcomes": [
+          "RC.RP: Recovery Planning",
+          "RC.IM: Improvements",
+          "RC.CO: Communications"
+        ]
+      }
+    },
+    "network_mappings": {
+      "PR.AA": {
+        "controls": ["802.1X NAC", "MFA", "PAM solutions", "RBAC", "Privileged access workstations"],
+        "technologies": ["Cisco ISE", "CyberArk", "Okta", "Microsoft Entra ID"]
+      },
+      "DE.CM": {
+        "controls": ["SIEM", "NDR (Network Detection and Response)", "IDS/IPS", "NetFlow/IPFIX"],
+        "technologies": ["Splunk", "Microsoft Sentinel", "Darktrace", "Cisco Stealthwatch"]
+      },
+      "PR.DS": {
+        "controls": ["Encryption at rest and in transit", "DLP", "Data classification", "Backup encryption"],
+        "technologies": ["Varonis", "Symantec DLP", "Vera", "Virtru"]
+      }
+    }
+  },
+  "iso_27001": {
+    "version": "2022",
+    "applicable_to": "Any organization seeking to manage information security risks",
+    "annex_a_network_controls": {
+      "A.8.20": {
+        "title": "Networks security",
+        "requirements": [
+          "Networks managed to protect information in systems and applications",
+          "Controls implemented to protect information in networks"
+        ]
+      },
+      "A.8.21": {
+        "title": "Security of network services",
+        "requirements": [
+          "Security mechanisms, service levels, and management requirements identified",
+          "Security features of network services included in network service agreements"
+        ]
+      },
+      "A.8.22": {
+        "title": "Segregation of networks",
+        "requirements": [
+          "Groups of information services, users, and information systems segregated",
+          "Network perimeters defined and access between perimeters controlled"
+        ]
+      }
+    }
+  },
+  "fedramp": {
+    "description": "Federal Risk and Authorization Management Program",
+    "applicable_to": "Cloud service providers serving US federal agencies",
+    "impact_levels": {
+      "low": "Limited adverse effect on operations",
+      "moderate": "Serious adverse effect (most federal systems)",
+      "high": "Severe or catastrophic adverse effect (law enforcement, healthcare)"
+    },
+    "network_requirements": {
+      "boundary_protection": "Managed interfaces at organizational system boundaries",
+      "network_segmentation": "Internal network separated from external networks",
+      "dns_security": "DNSSEC implemented for DNS security",
+      "encryption_in_transit": "FIPS 140-2/140-3 validated cryptography"
+    }
+  }
+}

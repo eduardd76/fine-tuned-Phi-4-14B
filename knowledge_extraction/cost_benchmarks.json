@@ -1,0 +1,235 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-03-28",
+    "currency": "USD",
+    "source": "Enterprise network TCO studies, Gartner research, and industry benchmarks",
+    "note": "These are representative benchmarks for planning purposes. Actual costs vary by vendor, region, and negotiation."
+  },
+  "capex_by_scale": {
+    "small": {
+      "user_range": "< 500 users",
+      "typical_users": 200,
+      "topology": "collapsed_core",
+      "hardware_cost_per_user": {
+        "range": "$200 - $500",
+        "typical": "$350",
+        "includes": ["Access switches", "Core/distribution switches", "Firewall", "WAN router", "WiFi APs", "Cabling"]
+      },
+      "total_hardware_estimate": "$70,000 - $150,000",
+      "breakdown": {
+        "switching": "35% ($24,500 - $52,500)",
+        "security": "25% ($17,500 - $37,500)",
+        "wireless": "20% ($14,000 - $30,000)",
+        "wan_routing": "15% ($10,500 - $22,500)",
+        "cabling": "5% ($3,500 - $7,500)"
+      },
+      "software_licensing": {
+        "annual_cost_per_user": "$50 - $150",
+        "annual_total": "$10,000 - $75,000",
+        "includes": ["DNA Center", "ISE", "Network management"]
+      },
+      "implementation": {
+        "cost": "$20,000 - $50,000",
+        "timeline_weeks": "4 - 8"
+      }
+    },
+    "medium": {
+      "user_range": "500 - 5000 users",
+      "typical_users": 2000,
+      "topology": "collapsed_core or three_tier",
+      "hardware_cost_per_user": {
+        "range": "$400 - $900",
+        "typical": "$600",
+        "includes": ["Full three-tier switching", "Redundant firewalls", "WAN routers", "WiFi with controller", "Structured cabling"]
+      },
+      "total_hardware_estimate": "$800,000 - $4,500,000",
+      "breakdown": {
+        "switching": "40% ($320,000 - $1,800,000)",
+        "security_firewalls": "20% ($160,000 - $900,000)",
+        "wireless": "15% ($120,000 - $675,000)",
+        "wan_sd_wan": "15% ($120,000 - $675,000)",
+        "cabling_physical": "5% ($40,000 - $225,000)",
+        "management_systems": "5% ($40,000 - $225,000)"
+      },
+      "software_licensing": {
+        "annual_cost_per_user": "$100 - $250",
+        "annual_total_typical": "$200,000 - $500,000"
+      },
+      "implementation": {
+        "cost": "$100,000 - $400,000",
+        "timeline_weeks": "12 - 24"
+      }
+    },
+    "large": {
+      "user_range": "5000 - 50000 users",
+      "typical_users": 15000,
+      "topology": "three_tier",
+      "hardware_cost_per_user": {
+        "range": "$600 - $1400",
+        "typical": "$1000",
+        "includes": ["Full redundant three-tier", "NGFW cluster", "Load balancers", "SD-WAN", "Enterprise WiFi", "OOB management network"]
+      },
+      "total_hardware_estimate": "$9,000,000 - $28,000,000",
+      "breakdown": {
+        "core_distribution": "30% ($2,700,000 - $8,400,000)",
+        "access_layer": "20% ($1,800,000 - $5,600,000)",
+        "security": "20% ($1,800,000 - $5,600,000)",
+        "wireless": "10% ($900,000 - $2,800,000)",
+        "wan_sd_wan": "10% ($900,000 - $2,800,000)",
+        "management_tools": "5% ($450,000 - $1,400,000)",
+        "data_center_network": "5% ($450,000 - $1,400,000)"
+      },
+      "software_licensing": {
+        "annual_cost_per_user": "$150 - $350",
+        "annual_total_typical": "$2,250,000 - $5,250,000"
+      },
+      "implementation": {
+        "cost": "$500,000 - $3,000,000",
+        "timeline_months": "6 - 18"
+      },
+      "compliance_premium": {
+        "pci_dss": "+25-35% for CDE isolation and NGFW",
+        "hipaa": "+20-30% for PHI segmentation and encryption",
+        "sox": "+15-20% for audit logging infrastructure"
+      }
+    },
+    "enterprise": {
+      "user_range": "> 50000 users",
+      "typical_users": 100000,
+      "topology": "three_tier with multiple data centers",
+      "hardware_cost_per_user": {
+        "range": "$400 - $1000",
+        "typical": "$600",
+        "note": "Lower per-user cost due to economies of scale"
+      },
+      "total_hardware_estimate": "$60,000,000 - $200,000,000",
+      "multi_dc_premium": "Add 40-60% for geo-redundant dual data center",
+      "software_licensing": {
+        "annual_total_typical": "$15,000,000 - $50,000,000",
+        "note": "Enterprise agreements typically 20-30% discount vs list price"
+      },
+      "implementation": {
+        "timeline_months": "18 - 36",
+        "phases": "Phased multi-year program"
+      }
+    }
+  },
+  "opex_models": {
+    "wan_circuit_costs": {
+      "mpls": {
+        "small_site_10mbps": "$500 - $1,500/month",
+        "medium_site_100mbps": "$2,000 - $5,000/month",
+        "large_site_1gbps": "$8,000 - $25,000/month"
+      },
+      "broadband_internet": {
+        "small_site_100mbps": "$100 - $300/month",
+        "medium_site_1gbps": "$500 - $2,000/month",
+        "large_site_10gbps": "$3,000 - $10,000/month"
+      },
+      "sd_wan_service": {
+        "per_site_small": "$200 - $600/month (management + licensing)",
+        "per_site_medium": "$500 - $1,500/month",
+        "note": "Transport cost additional"
+      }
+    },
+    "maintenance_costs": {
+      "cisco_smartnet": "8-15% of hardware list price annually",
+      "juniper_jtac": "8-12% of hardware list price annually",
+      "arista_support": "7-12% of hardware list price annually",
+      "typical_blended": "10-12% of hardware CapEx per year"
+    },
+    "staffing_requirements": {
+      "small_network": {
+        "headcount": "0.5 - 1 FTE network engineer",
+        "annual_fully_loaded": "$70,000 - $120,000"
+      },
+      "medium_network": {
+        "headcount": "2 - 5 FTE network engineers",
+        "annual_fully_loaded": "$200,000 - $600,000"
+      },
+      "large_network": {
+        "headcount": "10 - 25 FTE network engineers + architects",
+        "annual_fully_loaded": "$1,500,000 - $4,000,000",
+        "roles": ["Network architects", "Network engineers", "NOC operators", "Security engineers"]
+      },
+      "enterprise_network": {
+        "headcount": "50 - 200+ networking staff",
+        "includes": ["Architects", "Engineers", "Operators", "Security", "Automation/DevNetOps"]
+      }
+    },
+    "cloud_costs_comparison": {
+      "aws_direct_connect": {
+        "1gbps_port": "$220/month dedicated port",
+        "10gbps_port": "$2,200/month dedicated port",
+        "data_transfer": "$0.02/GB outbound after free tier"
+      },
+      "azure_expressroute": {
+        "1gbps_circuit": "$1,050/month metered",
+        "10gbps_circuit": "$10,080/month metered",
+        "unlimited_plan": "2x metered price, no data charges"
+      }
+    }
+  },
+  "tco_models": {
+    "3_year_tco_by_scale": {
+      "small": {
+        "capex": "$120,000",
+        "3yr_maintenance": "$43,200",
+        "3yr_wan": "$54,000",
+        "3yr_staffing": "$270,000",
+        "3yr_software": "$45,000",
+        "total_3yr_tco": "$532,200",
+        "per_user_per_year": "$886 (200 users)"
+      },
+      "medium": {
+        "capex": "$2,400,000",
+        "3yr_maintenance": "$864,000",
+        "3yr_wan": "$900,000",
+        "3yr_staffing": "$1,350,000",
+        "3yr_software": "$900,000",
+        "total_3yr_tco": "$6,414,000",
+        "per_user_per_year": "$1,069 (2000 users)"
+      },
+      "large": {
+        "capex": "$15,000,000",
+        "3yr_maintenance": "$5,400,000",
+        "3yr_wan": "$7,200,000",
+        "3yr_staffing": "$7,500,000",
+        "3yr_software": "$6,750,000",
+        "total_3yr_tco": "$41,850,000",
+        "per_user_per_year": "$931 (15000 users)"
+      }
+    }
+  },
+  "roi_considerations": {
+    "downtime_cost": {
+      "small_business": "$8,000 - $74,000 per hour",
+      "medium_enterprise": "$74,000 - $700,000 per hour",
+      "large_enterprise": "$700,000 - $5,000,000 per hour",
+      "financial_services": "$5,000,000+ per hour (trading firms)"
+    },
+    "ha_investment_justification": {
+      "99_9_to_99_99": {
+        "improvement": "8.7 hours to 52 minutes downtime/year",
+        "typical_cost_increase": "30-40% additional CapEx for full redundancy",
+        "roi_formula": "Avoided downtime cost vs additional CapEx"
+      }
+    }
+  },
+  "vendor_pricing_notes": {
+    "cisco": {
+      "enterprise_agreements": "EA offers 20-30% discount vs transactional pricing",
+      "dna_subscription": "$50-150/device/year for Cisco DNA Center features",
+      "smart_licensing": "Required for most new Cisco platforms"
+    },
+    "juniper": {
+      "enterprise_contracts": "Similar EA discounting available",
+      "mist_ai": "Juniper Mist AI subscription for wireless $20-80/AP/year"
+    },
+    "arista": {
+      "cloudvision": "Subscription model ~$500-2000/device/year depending on tier",
+      "list_pricing": "Often 20-40% lower than Cisco equivalent hardware"
+    }
+  }
+}

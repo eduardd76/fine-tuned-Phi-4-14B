@@ -1,0 +1,547 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-03-28",
+    "source": "Network troubleshooting methodologies - industry standards and CCNA/CCNP/CCDE practices"
+  },
+  "bgp_issues": {
+    "neighbor_down": {
+      "symptom": "BGP neighbor is in Idle or Active state, not Established",
+      "decision_tree": [
+        {
+          "step": 1,
+          "check": "Verify BGP configuration on both routers",
+          "commands": ["show bgp neighbors", "show running-config | section bgp"],
+          "expected": "BGP neighbor address, AS number, and router-id configured correctly",
+          "if_fail": "Correct BGP configuration - check remote-as, neighbor address, local-as"
+        },
+        {
+          "step": 2,
+          "check": "Verify TCP port 179 connectivity",
+          "commands": ["telnet <neighbor-ip> 179", "show ip sockets", "debug ip tcp transactions"],
+          "expected": "TCP connection can be established to port 179",
+          "if_fail": "Check ACLs blocking port 179, firewall rules, route to neighbor"
+        },
+        {
+          "step": 3,
+          "check": "Verify IP reachability to neighbor",
+          "commands": ["ping <neighbor-ip> source <local-interface>", "show ip route <neighbor-ip>"],
+          "expected": "Successful ping with correct source IP",
+          "if_fail": "Fix routing to neighbor - add static route or ensure IGP reachability"
+        },
+        {
+          "step": 4,
+          "check": "Check for authentication mismatch",
+          "commands": ["show bgp neighbors | include password", "debug ip bgp <neighbor-ip> events"],
+          "expected": "MD5 authentication enabled and matching on both ends",
+          "if_fail": "Configure matching MD5 password: neighbor <ip> password <key>"
+        },
+        {
+          "step": 5,
+          "check": "Verify TTL for eBGP multihop",
+          "commands": ["show bgp neighbors | include TTL", "show ip bgp summary"],
+          "expected": "TTL >= hop count for eBGP multihop scenarios",
+          "if_fail": "Configure: neighbor <ip> ebgp-multihop <ttl>"
+        },
+        {
+          "step": 6,
+          "check": "Check for policy/prefix-list blocking",
+          "commands": ["show bgp neighbors <ip> policy", "show ip prefix-list"],
+          "expected": "Route policies not blocking session establishment",
+          "if_fail": "Review and correct route-maps and prefix-lists applied to neighbor"
+        },
+        {
+          "step": 7,
+          "check": "Review BGP timers",
+          "commands": ["show bgp neighbors | include timer", "show bgp neighbors | include hold"],
+          "expected": "Hold timer negotiated (default 90s, keepalive 30s)",
+          "if_fail": "Check for timer mismatch - must be compatible (neighbor's value used if lower)"
+        }
+      ],
+      "common_causes": [
+        "AS number misconfiguration",
+        "ACL blocking TCP 179",
+        "No route to neighbor (especially loopback-to-loopback)",
+        "MD5 password mismatch",
+        "TTL expired for eBGP (need ebgp-multihop)",
+        "Wrong update-source interface"
+      ]
+    },
+    "route_missing": {
+      "symptom": "Expected BGP route not appearing in routing table",
+      "decision_tree": [
+        {
+          "step": 1,
+          "check": "Verify route exists in BGP table",
+          "commands": ["show bgp ipv4 unicast <prefix>", "show ip bgp <prefix>"],
+          "expected": "Route present in BGP table with valid next-hop",
+          "if_fail": "Route not received - check neighbor advertisements and prefix-lists"
+        },
+        {
+          "step": 2,
+          "check": "Check BGP best path selection",
+          "commands": ["show bgp ipv4 unicast <prefix>", "debug ip bgp <prefix> bestpath"],
+          "expected": "Route marked with > (best) and * (valid)",
+          "if_fail": "Review best path selection criteria - weight, local preference, AS path, MED"
+        },
+        {
+          "step": 3,
+          "check": "Verify next-hop reachability",
+          "commands": ["show bgp ipv4 unicast <prefix>", "show ip route <next-hop>"],
+          "expected": "Next-hop IP is reachable in routing table",
+          "if_fail": "Add next-hop-self or ensure IGP carries next-hop route"
+        },
+        {
+          "step": 4,
+          "check": "Check inbound route policies",
+          "commands": ["show bgp neighbors <ip> policy", "show route-map <name>"],
+          "expected": "Inbound route-map/prefix-list not filtering the route",
+          "if_fail": "Modify route policy to permit the prefix"
+        },
+        {
+          "step": 5,
+          "check": "Verify synchronization settings",
+          "commands": ["show running-config | section bgp"],
+          "expected": "synchronization disabled (standard for iBGP)",
+          "if_fail": "Disable synchronization or ensure route in IGP first"
+        }
+      ],
+      "bgp_best_path_order": [
+        "1. Highest WEIGHT (Cisco proprietary, local only)",
+        "2. Highest LOCAL_PREF (iBGP, default 100)",
+        "3. Locally originated (network/redistribute/aggregate)",
+        "4. Shortest AS_PATH",
+        "5. Lowest ORIGIN code (i < e < ?)",
+        "6. Lowest MED (Multi-Exit Discriminator)",
+        "7. eBGP over iBGP",
+        "8. Lowest IGP metric to next-hop",
+        "9. Oldest eBGP route (stability)",
+        "10. Lowest Router-ID",
+        "11. Shortest cluster list length",
+        "12. Lowest neighbor IP"
+      ]
+    },
+    "convergence_slow": {
+      "symptom": "BGP takes too long to converge after topology change",
+      "causes_and_fixes": [
+        {
+          "cause": "High MRAI (Minimum Route Advertisement Interval)",
+          "default": "30 seconds for eBGP, 0 for iBGP",
+          "fix": "neighbor <ip> advertisement-interval 0",
+          "impact": "Faster convergence but more BGP updates"
+        },
+        {
+          "cause": "Slow hold timer expiry detection",
+          "default": "Hold timer 90s, keepalive 30s",
+          "fix": "neighbor <ip> timers 3 9 (3s keepalive, 9s hold)",
+          "better_fix": "Enable BFD: neighbor <ip> fall-over bfd"
+        },
+        {
+          "cause": "Route flap dampening",
+          "check": "show bgp <prefix> (look for dampened state)",
+          "fix": "Disable dampening or tune parameters"
+        },
+        {
+          "cause": "BGP scanner interval",
+          "fix": "bgp scan-time <seconds> (reduce from default 60s)"
+        }
+      ]
+    }
+  },
+  "ospf_issues": {
+    "neighbor_stuck_in_exstart": {
+      "symptom": "OSPF neighbor stuck in EXSTART or EXCHANGE state",
+      "root_cause": "Almost always an MTU mismatch between interfaces",
+      "decision_tree": [
+        {
+          "step": 1,
+          "check": "Verify MTU settings on both interfaces",
+          "commands": ["show interface <int>", "show ip ospf interface <int>"],
+          "expected": "MTU values match on both ends",
+          "if_fail": "Match MTU: ip mtu <value> OR ip ospf mtu-ignore (workaround)"
+        },
+        {
+          "step": 2,
+          "check": "Verify OSPF Hello parameters match",
+          "commands": ["show ip ospf interface <int>"],
+          "expected": "Hello interval and Dead interval match on both ends",
+          "if_fail": "Correct timers: ip ospf hello-interval <s>, ip ospf dead-interval <s>"
+        },
+        {
+          "step": 3,
+          "check": "Verify Area type matches",
+          "commands": ["show ip ospf", "show ip ospf interface"],
+          "expected": "Both routers in same area with same area type (stub, NSSA, etc.)",
+          "if_fail": "Configure matching area type: area <id> stub, area <id> nssa"
+        },
+        {
+          "step": 4,
+          "check": "Check for duplicate Router IDs",
+          "commands": ["show ip ospf | include Router ID"],
+          "expected": "All routers have unique router IDs in the OSPF domain",
+          "if_fail": "Change router-id: router-id <unique-ip>, then clear ip ospf process"
+        }
+      ],
+      "ospf_states": {
+        "Down": "No OSPF communication",
+        "Init": "Hello received but own router-id not in hello",
+        "2-Way": "Full bidirectional communication, DR/BDR election",
+        "ExStart": "DBD exchange initiation, master/slave election",
+        "Exchange": "DBD packets being exchanged",
+        "Loading": "LSR/LSU exchange for missing LSAs",
+        "Full": "Neighbors fully synchronized"
+      }
+    },
+    "lsa_flooding_issues": {
+      "symptom": "OSPF database too large, high CPU due to LSA processing",
+      "causes_and_fixes": [
+        {
+          "cause": "Too many Type-5 LSAs from redistribution",
+          "fix": "Use NSSA (Type-7) instead: area <id> nssa",
+          "alternative": "Aggregate redistributed routes: summary-address <prefix> <mask>"
+        },
+        {
+          "cause": "Too many routers in single area",
+          "fix": "Create hierarchy with multiple areas",
+          "recommendation": "Max 50-100 routers per OSPF area"
+        },
+        {
+          "cause": "Unstable links causing LSA storms",
+          "check": "show ip ospf statistics",
+          "fix": "Dampen unstable links or fix physical layer issues"
+        },
+        {
+          "cause": "No route summarization at ABRs",
+          "fix": "area <id> range <prefix> <mask> (at ABR)",
+          "benefit": "Reduces Type-3 LSA count"
+        }
+      ]
+    },
+    "ospf_neighbor_down": {
+      "symptom": "OSPF adjacency dropped suddenly",
+      "decision_tree": [
+        {
+          "step": 1,
+          "check": "Check physical/data link layer",
+          "commands": ["show interface <int>", "show ip interface brief"],
+          "expected": "Interface up/up, no input errors"
+        },
+        {
+          "step": 2,
+          "check": "Verify OSPF is enabled on interface",
+          "commands": ["show ip ospf interface <int>"],
+          "expected": "Interface shows OSPF enabled"
+        },
+        {
+          "step": 3,
+          "check": "Check OSPF area authentication",
+          "commands": ["show ip ospf | include authentication"],
+          "expected": "Authentication type matches on both ends"
+        },
+        {
+          "step": 4,
+          "check": "Look at syslog for reason",
+          "commands": ["show log | include OSPF"],
+          "expected": "Find specific failure reason in logs"
+        }
+      ]
+    }
+  },
+  "interface_issues": {
+    "packet_loss": {
+      "symptom": "Packet loss observed on interface or in ping tests",
+      "decision_tree": [
+        {
+          "step": 1,
+          "check": "Layer 1 - Physical issues",
+          "commands": ["show interface <int>", "show interface <int> counters errors"],
+          "checks": [
+            "Input/output errors incrementing",
+            "CRC errors (physical layer)",
+            "Giants/Runts (MTU issues)",
+            "Collisions (duplex mismatch)"
+          ]
+        },
+        {
+          "step": 2,
+          "check": "Layer 2 - Data link issues",
+          "commands": ["show interface <int>", "show cdp neighbors detail"],
+          "checks": [
+            "Duplex mismatch (auto vs 1000 full)",
+            "Speed mismatch",
+            "VLAN misconfiguration",
+            "STP topology changes"
+          ]
+        },
+        {
+          "step": 3,
+          "check": "Layer 3 - Network layer",
+          "commands": ["show ip interface <int>", "show ip route"],
+          "checks": [
+            "Routing loops (TTL expiry)",
+            "MTU mismatch causing fragmentation/drops",
+            "ACL dropping packets",
+            "NAT translation failures"
+          ]
+        },
+        {
+          "step": 4,
+          "check": "Output queue drops",
+          "commands": ["show interface <int> | include output drops", "show queuing interface <int>"],
+          "expected": "No output queue drops",
+          "if_fail": "QoS policy needed or bandwidth upgrade required"
+        },
+        {
+          "step": 5,
+          "check": "CPU overload",
+          "commands": ["show processes cpu sorted", "show platform resources"],
+          "expected": "CPU < 70% (5-second average)",
+          "if_fail": "Reduce routing protocol instability, check for loops"
+        }
+      ]
+    },
+    "interface_flapping": {
+      "symptom": "Interface repeatedly going up and down",
+      "causes": [
+        {
+          "cause": "Physical cable or SFP failure",
+          "check": "show interface | include line protocol",
+          "fix": "Replace cable or SFP"
+        },
+        {
+          "cause": "Duplex/speed mismatch",
+          "check": "show interface | include duplex",
+          "fix": "Hard-code speed and duplex: duplex full, speed 1000"
+        },
+        {
+          "cause": "PoE overload on access switch",
+          "check": "show power inline",
+          "fix": "Redistribute PoE devices or add higher-capacity PoE switch"
+        },
+        {
+          "cause": "BFD misconfiguration",
+          "check": "show bfd neighbors",
+          "fix": "Adjust BFD timers: bfd interval 300 min_rx 300 multiplier 3"
+        }
+      ],
+      "mitigation": {
+        "carrier_delay": "carrier-delay msec 500 (prevents rapid up/down logging)",
+        "debounce": "Available on some platforms to filter brief flaps"
+      }
+    },
+    "crc_errors": {
+      "symptom": "CRC errors incrementing on interface",
+      "causes": [
+        "Bad cable (especially copper)",
+        "Faulty SFP transceiver",
+        "Duplex mismatch (half-duplex collisions)",
+        "EMI interference",
+        "Cable too long for standard"
+      ],
+      "diagnostic_steps": [
+        "Replace cable with known-good",
+        "Check SFP optical power levels: show interface transceiver",
+        "Hard-code duplex to full",
+        "Check cable run length against spec",
+        "Test with cable tester (TDR)"
+      ]
+    }
+  },
+  "qos_issues": {
+    "buffer_drops": {
+      "symptom": "Packets dropped in output queues",
+      "decision_tree": [
+        {
+          "step": 1,
+          "check": "Identify which queue has drops",
+          "commands": ["show interface <int> | include drop", "show policy-map interface <int>"],
+          "expected": "Identify specific class with drops"
+        },
+        {
+          "step": 2,
+          "check": "Check bandwidth allocation vs actual usage",
+          "commands": ["show policy-map interface <int>"],
+          "analysis": "If offered rate > guaranteed bandwidth, drops are expected"
+        },
+        {
+          "step": 3,
+          "check": "Review queue depths (WRED settings)",
+          "commands": ["show policy-map interface <int>"],
+          "tuning": "Adjust WRED min/max thresholds for better buffer management"
+        },
+        {
+          "step": 4,
+          "check": "Evaluate if link bandwidth is adequate",
+          "analysis": "If all queues congested, need more bandwidth or traffic shaping"
+        }
+      ],
+      "queue_priorities": {
+        "voice": "Priority queue (LLQ) - 20-25% bandwidth, strict priority",
+        "video": "AF41 class - 15-20% bandwidth, DSCP AF41",
+        "critical_apps": "AF31 class - 20-25% bandwidth, DSCP AF31",
+        "default": "Best effort - remaining bandwidth",
+        "scavenger": "CS1 class - 1% bandwidth (bulk/P2P)"
+      }
+    },
+    "misclassification": {
+      "symptom": "Traffic not being classified correctly, wrong DSCP markings",
+      "decision_tree": [
+        {
+          "step": 1,
+          "check": "Verify DSCP markings at ingress",
+          "commands": ["show policy-map interface <int>", "debug ip packet detail"],
+          "expected": "Traffic has correct DSCP markings from source"
+        },
+        {
+          "step": 2,
+          "check": "Review class-map match criteria",
+          "commands": ["show class-map <name>"],
+          "expected": "Match criteria correctly identifies the traffic"
+        },
+        {
+          "step": 3,
+          "check": "Verify policy-map application",
+          "commands": ["show policy-map interface <int>"],
+          "expected": "Policy applied to correct interface in correct direction"
+        },
+        {
+          "step": 4,
+          "check": "Trust boundary configuration",
+          "commands": ["show mls qos interface <int>"],
+          "expected": "Trust state configured correctly at network boundary"
+        }
+      ]
+    }
+  },
+  "connectivity_issues": {
+    "layer1_to_layer7_sequence": {
+      "description": "Systematic bottom-up troubleshooting methodology",
+      "layers": [
+        {
+          "layer": 1,
+          "name": "Physical",
+          "checks": [
+            "Interface status (show interface brief)",
+            "Cable connections",
+            "SFP/optics installed",
+            "Link lights on switch/router",
+            "Power to device"
+          ],
+          "commands": ["show interface <int>", "show controllers <int>"]
+        },
+        {
+          "layer": 2,
+          "name": "Data Link",
+          "checks": [
+            "VLAN membership correct",
+            "Trunk configuration",
+            "MAC address learning",
+            "STP port state (forwarding/blocking)",
+            "Duplex/speed match"
+          ],
+          "commands": ["show mac address-table", "show spanning-tree", "show vlan brief", "show interface <int> trunk"]
+        },
+        {
+          "layer": 3,
+          "name": "Network",
+          "checks": [
+            "IP address assigned and correct subnet",
+            "Default gateway configured",
+            "Route to destination exists",
+            "ACL not blocking traffic",
+            "Ping to gateway successful"
+          ],
+          "commands": ["show ip interface brief", "show ip route", "show ip access-lists", "ping <dest>"]
+        },
+        {
+          "layer": 4,
+          "name": "Transport",
+          "checks": [
+            "Port not filtered by firewall/ACL",
+            "Service listening on correct port",
+            "TCP/UDP stateful tracking",
+            "NAT translation working"
+          ],
+          "commands": ["telnet <ip> <port>", "show ip nat translations", "show conn (ASA)"]
+        },
+        {
+          "layer": 5,
+          "name": "Session",
+          "checks": [
+            "SSL/TLS handshake completing",
+            "Session establishment",
+            "Authentication"
+          ]
+        },
+        {
+          "layer": 6,
+          "name": "Presentation",
+          "checks": [
+            "Data format/encoding",
+            "Compression",
+            "Encryption certificates"
+          ]
+        },
+        {
+          "layer": 7,
+          "name": "Application",
+          "checks": [
+            "Application configuration",
+            "DNS resolution",
+            "Application-level authentication",
+            "Application logs"
+          ],
+          "commands": ["nslookup <name>", "dig <name>"]
+        }
+      ]
+    }
+  },
+  "routing_loops": {
+    "detection": {
+      "symptoms": [
+        "Packets with decreasing TTL in captures",
+        "Traceroute shows same routers repeatedly",
+        "High CPU on affected routers",
+        "Traffic not reaching destination"
+      ],
+      "commands": ["traceroute <dest>", "show ip route <prefix>", "show ip cef <prefix>", "debug ip packet detail <acl>"]
+    },
+    "causes": [
+      {
+        "cause": "Redistribution without filtering causing feedback loop",
+        "fix": "Use route tags: tag routes when redistributing, filter tagged routes going back"
+      },
+      {
+        "cause": "Static route pointing to interface with dynamic backup",
+        "fix": "Use floating static route with higher AD"
+      },
+      {
+        "cause": "OSPF/BGP summarization creating black holes with loop",
+        "fix": "Null0 route for summary to prevent routing to incomplete networks"
+      }
+    ]
+  },
+  "dhcp_issues": {
+    "no_ip_address": {
+      "decision_tree": [
+        {
+          "step": 1,
+          "check": "DHCP server reachable",
+          "commands": ["show ip dhcp server statistics", "debug ip dhcp server events"]
+        },
+        {
+          "step": 2,
+          "check": "DHCP relay configured",
+          "commands": ["show running-config | include helper"],
+          "expected": "ip helper-address <dhcp-server-ip> on each SVI"
+        },
+        {
+          "step": 3,
+          "check": "DHCP pool exhausted",
+          "commands": ["show ip dhcp pool", "show ip dhcp binding"],
+          "fix": "Expand pool or reduce lease time"
+        }
+      ]
+    }
+  }
+}
