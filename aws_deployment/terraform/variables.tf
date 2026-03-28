@@ -5,9 +5,9 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type (g4dn.xlarge=T4 16GB, g5.xlarge=A10G 24GB)"
+  description = "EC2 instance type (g4dn.xlarge=T4 16GB, g5.xlarge=A10G 24GB, g5.2xlarge=A10G 24GB+8vCPU)"
   type        = string
-  default     = "g4dn.xlarge"
+  default     = "g5.2xlarge"
   validation {
     condition     = contains(["g4dn.xlarge", "g4dn.2xlarge", "g5.xlarge", "g5.2xlarge", "p3.2xlarge"], var.instance_type)
     error_message = "Must be a GPU instance type."
@@ -23,13 +23,13 @@ variable "use_spot" {
 variable "spot_max_price" {
   description = "Maximum spot price per hour"
   type        = string
-  default     = "0.30"
+  default     = "0.55"
 }
 
 variable "root_volume_size_gb" {
   description = "Root EBS volume size in GB"
   type        = number
-  default     = 120
+  default     = 500
 }
 
 variable "key_name" {

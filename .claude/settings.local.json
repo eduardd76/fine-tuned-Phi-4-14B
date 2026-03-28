@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find F:Agentic_AppsCisco-podcastDream_Teamagentic-netops-mvpfine_tuned_llmsPhi-4-14B -name *.py -o -name *.json -o -name *.yaml -o -name *.md)",
+      "mcp__notebooklm-mcp__notebook_get",
+      "Bash(for f:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $f ===\")",
+      "Read(//f/Agentic_Apps/Cisco-podcast/Dream_Team/agentic-netops-mvp/fine_tuned_llms/Phi-4-14B/**)",
+      "Bash(done)",
+      "mcp__notebooklm-mcp__notebook_query",
+      "Bash(mkdir -p \"F:\\\\Agentic_Apps\\\\Cisco-podcast\\\\Dream_Team\\\\agentic-netops-mvp\\\\fine_tuned_llms\\\\NOC-Mistral-7B\\\\scripts\")",
+      "Bash(mkdir -p \"F:\\\\Agentic_Apps\\\\Cisco-podcast\\\\Dream_Team\\\\agentic-netops-mvp\\\\fine_tuned_llms\\\\NOC-Mistral-7B\\\\config\")",
+      "Bash(mkdir -p \"F:\\\\Agentic_Apps\\\\Cisco-podcast\\\\Dream_Team\\\\agentic-netops-mvp\\\\fine_tuned_llms\\\\NOC-Mistral-7B\\\\data\")",
+      "Bash(mkdir -p \"F:\\\\Agentic_Apps\\\\Cisco-podcast\\\\Dream_Team\\\\agentic-netops-mvp\\\\agents\\\\noc\")",
+      "Bash(mkdir -p \"F:\\\\Agentic_Apps\\\\Cisco-podcast\\\\Dream_Team\\\\agentic-netops-mvp\\\\tests\\\\integration\")",
+      "Bash(curl -s http://localhost:11434/api/tags)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(m[''''name'''']\\) for m in d.get\\(''''models'''',[]\\)]\")"
+    ]
+  }
+}

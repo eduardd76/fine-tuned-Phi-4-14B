@@ -1,0 +1,55 @@
+# config_agentic.yaml — Stage 3: Agentic SFT hyperparameters
+# Teaches tool use, ReAct reasoning, A2A protocol compliance
+# Builds on Stage 2 GRPO merged model
+# Hardware: g5.2xlarge (A10G 24GB VRAM)
+
+model:
+  name: "${BASE_MODEL_PATH}"  # Set to /data/merged/stage2
+  max_seq_length: 4096          # Longer for multi-turn tool conversations
+  dtype: "bfloat16"
+  load_in_4bit: true
+
+lora:
+  r: 32                         # Higher rank — new agentic patterns to learn
+  lora_alpha: 64
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  lora_dropout: 0.05
+  bias: "none"
+
+token_weights:
+  # Custom per-token loss weights
+  think_tokens: 2.0             # 2× weight: model must learn to reason
+  tool_call_tokens: 1.5         # 1.5× weight: tool selection is critical
+  tool_response_tokens: 0.0     # 0× weight: model didn't generate tool responses
+  default_tokens: 1.0           # Standard weight for all other tokens
+
+training:
+  learning_rate: 5.0e-5         # Higher LR — learning new agentic behaviours
+  num_epochs: 3
+  per_device_train_batch_size: 1  # Multi-turn samples are long
+  gradient_accumulation_steps: 8
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  save_steps: 100
+  logging_steps: 20
+  output_dir: "/data/stage3"
+  seed: 42
+  dataloader_num_workers: 2
+
+data:
+  train_file: "/data/datasets/agentic_train.jsonl"
+  max_samples: 2000
+  max_seq_length: 4096
+
+wandb:
+  project: "phi4-agentic-stage3"
+  run_name: "agentic-sft-v1"
+  enabled: false

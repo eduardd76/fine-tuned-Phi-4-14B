@@ -1,0 +1,62 @@
+# config_grpo.yaml — GRPO Stage 2 hyperparameters
+# Builds on Stage 1 SFT merged model
+# Hardware: g5.2xlarge (A10G 24GB VRAM)
+# CRITICAL: VLLM_GPU_MEMORY_UTILIZATION=0.45 must be set before running
+
+model:
+  name: "${BASE_MODEL_PATH}"  # Set to /data/merged/stage1
+  max_seq_length: 2048          # Shorter than SFT — GRPO needs VRAM for rollouts
+  dtype: "bfloat16"
+  load_in_4bit: true
+
+lora:
+  r: 16                         # Lower rank than SFT — model already learned structure
+  lora_alpha: 32
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  lora_dropout: 0.0
+  bias: "none"
+
+grpo:
+  num_generations: 8            # DeepSeek-R1 uses 8 rollouts per prompt
+  temperature: 0.9              # Higher temp for diverse rollouts
+  top_p: 0.95
+  max_new_tokens: 512           # Shorter for GRPO — reward on reasoning quality
+  kl_coeff: 0.04                # KL penalty prevents reward hacking (DeepSeek-R1 value)
+  clip_epsilon: 0.2             # PPO clipping
+
+training:
+  learning_rate: 5.0e-6         # Lower LR — fine adjustment to reasoning
+  num_epochs: 3
+  per_device_train_batch_size: 1  # GRPO: 1 prompt × 8 rollouts = 8 completions
+  gradient_accumulation_steps: 4
+  warmup_steps: 20
+  weight_decay: 0.01
+  max_grad_norm: 0.1            # Tighter clipping for stable GRPO
+  save_steps: 50
+  logging_steps: 10
+  output_dir: "/data/stage2"
+  seed: 42
+
+data:
+  train_file: "/data/datasets/grpo_train.jsonl"
+  max_samples: 800
+
+vllm:
+  # GRPO requires vLLM for efficient rollout generation
+  # VLLM_GPU_MEMORY_UTILIZATION=0.45 leaves headroom for training policy
+  # Without this, OOM at first GRPO step on A10G 24GB
+  enabled: true
+  gpu_memory_utilization: 0.45
+  max_model_len: 2048
+
+wandb:
+  project: "phi4-grpo-stage2"
+  run_name: "grpo-ccde-v1"
+  enabled: false  # Set to true if WANDB_API_KEY is set

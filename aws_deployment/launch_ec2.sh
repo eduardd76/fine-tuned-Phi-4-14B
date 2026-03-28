@@ -19,10 +19,10 @@ set -euo pipefail
 # Configuration (override with env vars)
 # ─────────────────────────────────────────────────────────────────────────────
 REGION="${AWS_DEFAULT_REGION:-us-east-1}"
-INSTANCE_TYPE="${INSTANCE_TYPE:-g4dn.xlarge}"
+INSTANCE_TYPE="${INSTANCE_TYPE:-g5.2xlarge}"
 USE_SPOT="${USE_SPOT:-false}"
-SPOT_MAX_PRICE="${SPOT_MAX_PRICE:-0.30}"          # Max hourly spot price
-VOLUME_SIZE="${VOLUME_SIZE:-120}"                  # GB
+SPOT_MAX_PRICE="${SPOT_MAX_PRICE:-0.55}"          # Max hourly spot price
+VOLUME_SIZE="${VOLUME_SIZE:-500}"                  # GB
 KEY_NAME="${KEY_NAME:-phi4-training-key}"
 SG_NAME="${SG_NAME:-phi4-training-sg}"
 INSTANCE_NAME="phi4-training-$(date +%Y%m%d-%H%M)"
@@ -280,13 +280,13 @@ log "Setting up auto-shutdown alarm (20h timeout)..."
 aws cloudwatch put-metric-alarm \
     --region "$REGION" \
     --alarm-name "phi4-autoshutdown-${INSTANCE_ID}" \
-    --alarm-description "Auto-shutdown Phi-4 training instance after 20 hours" \
+    --alarm-description "Auto-shutdown Phi-4 training instance after 52 hours of low CPU" \
     --namespace "AWS/EC2" \
     --metric-name "CPUUtilization" \
     --dimensions "Name=InstanceId,Value=$INSTANCE_ID" \
     --statistic Average \
     --period 3600 \
-    --evaluation-periods 20 \
+    --evaluation-periods 52 \
     --threshold 5 \
     --comparison-operator LessThanThreshold \
     --alarm-actions "arn:aws:swf:${REGION}:$(aws sts get-caller-identity --query Account --output text):action/actions/AWS_EC2.InstanceId.Stop/1.0" \

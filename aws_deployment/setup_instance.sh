@@ -75,7 +75,25 @@ if ! mountpoint -q "$DATA_DIR" 2>/dev/null; then
     fi
 fi
 
-mkdir -p "$DATA_DIR"/{generated_data,models,checkpoints,logs,cache}
+mkdir -p "$DATA_DIR"/{models,datasets,outputs,cache/huggingface}
+mkdir -p "$DATA_DIR"/stage1/{checkpoints,logs,adapter}
+mkdir -p "$DATA_DIR"/stage2/{checkpoints,logs,adapter}
+mkdir -p "$DATA_DIR"/stage3/{checkpoints,logs,adapter}
+mkdir -p "$DATA_DIR"/merged/{stage1,stage2,stage3}
+
+# Persist GPU/cache env vars system-wide and in .env
+sudo tee -a /etc/environment > /dev/null <<'ENVEOF'
+VLLM_GPU_MEMORY_UTILIZATION=0.45
+HF_HOME=/data/cache/huggingface
+TRANSFORMERS_CACHE=/data/cache/huggingface
+ENVEOF
+
+cat >> "$DATA_DIR/.env" <<'DOTENV'
+VLLM_GPU_MEMORY_UTILIZATION=0.45
+HF_HOME=/data/cache/huggingface
+TRANSFORMERS_CACHE=/data/cache/huggingface
+DOTENV
+
 log "  Data directories created"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -114,15 +132,20 @@ log "Step 6: Python packages (this takes 5-10 minutes)"
 pip install --quiet torch torchvision torchaudio \
     --index-url https://download.pytorch.org/whl/cu121
 
-# Core ML
+# Install order is critical: packaging/ninja first, then flash-attn from source (~30 min),
+# then vLLM (required for GRPO rollouts), then trl>=0.15.0 (GRPOTrainer), then unsloth
+pip install --quiet packaging ninja
+pip install flash-attn --no-build-isolation
+pip install "vllm>=0.6.0"
+pip install "trl>=0.15.0"
+pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
 pip install --quiet \
-    "unsloth[colab-new]>=2024.12.0" \
     "transformers>=4.47.0" \
-    "trl>=0.13.0" \
     "peft>=0.14.0" \
     "bitsandbytes>=0.45.0" \
     "accelerate>=0.34.0" \
-    "datasets>=3.0.0"
+    "datasets>=3.0.0" \
+    openai anthropic
 
 # Quantization
 pip install --quiet \
