@@ -97,7 +97,12 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. Create Security Group (if not exists)
 # ─────────────────────────────────────────────────────────────────────────────
-MY_IP=$(curl -sf https://checkip.amazonaws.com || echo "0.0.0.0/0")
+MY_IP=$(curl -sk --max-time 5 https://checkip.amazonaws.com 2>/dev/null || curl -sk --max-time 5 https://api.ipify.org 2>/dev/null || echo "0.0.0.0")
+MY_IP=$(echo "$MY_IP" | tr -d '[:space:]')
+# Validate it's an IP, not already a CIDR
+if [[ ! "$MY_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    MY_IP="0.0.0.0"
+fi
 MY_IP="${MY_IP}/32"
 
 SG_ID=$(aws ec2 describe-security-groups \
