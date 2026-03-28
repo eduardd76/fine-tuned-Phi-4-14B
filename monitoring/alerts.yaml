@@ -1,0 +1,200 @@
+# Phi-4 Network Architect — Alert Rules
+#
+# CloudWatch alarms:  python monitoring/cloudwatch_setup.py --alarms-only
+# Prometheus rules:   load this file into your Prometheus / Alertmanager config
+
+# ---------------------------------------------------------------------------
+# CloudWatch alarm definitions
+# (consumed by cloudwatch_setup.py)
+# ---------------------------------------------------------------------------
+
+cloudwatch_alarms:
+
+  - name: Phi4-HighInferenceLatency
+    description: "p95 inference latency exceeded 15 s for 5 consecutive minutes"
+    metric: InferenceLatency
+    namespace: Phi4NetworkArchitect
+    stat: p95
+    period: 300
+    evaluation_periods: 1
+    threshold: 15000           # ms
+    comparison: GreaterThanThreshold
+    severity: warning
+
+  - name: Phi4-CriticalInferenceLatency
+    description: "p95 inference latency exceeded 30 s — model may be stalled"
+    metric: InferenceLatency
+    namespace: Phi4NetworkArchitect
+    stat: p95
+    period: 300
+    evaluation_periods: 2
+    threshold: 30000           # ms
+    comparison: GreaterThanThreshold
+    severity: critical
+
+  - name: Phi4-LowConfidenceScore
+    description: "Average confidence score dropped below 0.70"
+    metric: ConfidenceScore
+    namespace: Phi4NetworkArchitect
+    stat: Average
+    period: 600
+    evaluation_periods: 2
+    threshold: 0.70
+    comparison: LessThanThreshold
+    severity: warning
+
+  - name: Phi4-HighErrorRate
+    description: "More than 10 API errors in 5 minutes"
+    metric: ErrorCount
+    namespace: Phi4NetworkArchitect
+    stat: Sum
+    period: 300
+    evaluation_periods: 1
+    threshold: 10
+    comparison: GreaterThanThreshold
+    severity: critical
+
+  - name: Phi4-LowThinkBlockRate
+    description: "Fewer than 80% of responses include a <think> block"
+    metric: ThinkBlockPresent
+    namespace: Phi4NetworkArchitect
+    stat: Average
+    period: 900
+    evaluation_periods: 2
+    threshold: 0.80
+    comparison: LessThanThreshold
+    severity: warning
+
+  - name: Phi4-EC2-AutoShutdown
+    description: "CPU < 5% for 20 consecutive hours — instance idle after training"
+    metric: CPUUtilization
+    namespace: AWS/EC2
+    stat: Average
+    period: 3600
+    evaluation_periods: 20
+    threshold: 5
+    comparison: LessThanThreshold
+    severity: info
+    action: stop_instance        # Interpreted by cloudwatch_setup.py
+
+  - name: Phi4-LowDiskSpace
+    description: "Less than 10 GB free on /data volume"
+    metric: disk_used_percent
+    namespace: Phi4NetworkArchitect
+    stat: Average
+    period: 300
+    evaluation_periods: 1
+    threshold: 85                # > 85% used ≈ < 15% free on 120 GB = 18 GB free
+    comparison: GreaterThanThreshold
+    severity: warning
+
+
+# ---------------------------------------------------------------------------
+# Prometheus / Alertmanager rules
+# (place in prometheus/rules/phi4.yaml or include in alertmanager.yml)
+# ---------------------------------------------------------------------------
+
+prometheus_rules:
+  groups:
+    - name: phi4_api
+      interval: 1m
+      rules:
+
+        - alert: Phi4HighInferenceLatency
+          expr: histogram_quantile(0.95, rate(phi4_inference_duration_seconds_bucket[5m])) > 15
+          for: 5m
+          labels:
+            severity: warning
+            service: phi4-api
+          annotations:
+            summary: "Phi-4 p95 inference latency > 15s"
+            description: "95th percentile inference latency is {{ $value | humanizeDuration }}. Check GPU load."
+
+        - alert: Phi4CriticalLatency
+          expr: histogram_quantile(0.95, rate(phi4_inference_duration_seconds_bucket[5m])) > 30
+          for: 2m
+          labels:
+            severity: critical
+            service: phi4-api
+          annotations:
+            summary: "Phi-4 p95 latency critically high (> 30s)"
+            description: "Model may be stalled or OOM. Restart api container."
+
+        - alert: Phi4LowConfidence
+          expr: histogram_quantile(0.50, rate(phi4_confidence_score_bucket[10m])) < 0.70
+          for: 10m
+          labels:
+            severity: warning
+            service: phi4-api
+          annotations:
+            summary: "Phi-4 median confidence score < 0.70"
+            description: "Median confidence is {{ $value }}. Model may need retraining."
+
+        - alert: Phi4HighErrorRate
+          expr: rate(phi4_api_requests_total{status_code=~"5.."}[5m]) > 0.1
+          for: 2m
+          labels:
+            severity: critical
+            service: phi4-api
+          annotations:
+            summary: "Phi-4 API error rate > 10%"
+            description: "Error rate is {{ $value | humanizePercentage }}."
+
+        - alert: Phi4LowThinkBlockRate
+          expr: |
+            rate(phi4_think_block_total{has_think="True"}[15m]) /
+            (rate(phi4_think_block_total[15m]) + 1e-9) < 0.80
+          for: 15m
+          labels:
+            severity: warning
+            service: phi4-api
+          annotations:
+            summary: "Phi-4 <think> block rate < 80%"
+            description: "Only {{ $value | humanizePercentage }} of responses include reasoning blocks."
+
+        - alert: Phi4APIDown
+          expr: up{job="phi4-api"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: phi4-api
+          annotations:
+            summary: "Phi-4 API is down"
+            description: "Prometheus scrape target phi4-api is unreachable."
+
+        - alert: Phi4HighActiveRequests
+          expr: phi4_api_active_requests > 10
+          for: 2m
+          labels:
+            severity: warning
+            service: phi4-api
+          annotations:
+            summary: "Phi-4 API has > 10 concurrent requests"
+            description: "Current active requests: {{ $value }}. Consider scaling."
+
+
+# ---------------------------------------------------------------------------
+# Notification channels
+# ---------------------------------------------------------------------------
+
+notification_channels:
+
+  - name: ops-email
+    type: email
+    address: "${OPS_EMAIL}"     # Set OPS_EMAIL environment variable
+
+  - name: ops-slack
+    type: slack
+    webhook: "${SLACK_WEBHOOK}"  # Set SLACK_WEBHOOK environment variable
+    channel: "#phi4-alerts"
+
+  - name: pagerduty
+    type: pagerduty
+    integration_key: "${PAGERDUTY_KEY}"
+    # Only use for critical severity
+
+# Routing: warning → email + slack, critical → all channels
+routing:
+  warning:   [ops-email, ops-slack]
+  critical:  [ops-email, ops-slack, pagerduty]
+  info:      [ops-slack]
