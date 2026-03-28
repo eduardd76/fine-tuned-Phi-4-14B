@@ -294,6 +294,10 @@ def train(config: dict[str, Any], resume_from: str | None = None) -> None:
         load_best_model_at_end=train_cfg.get("load_best_model_at_end", True) if val_dataset else False,
         report_to=["wandb"],
         run_name=run_name,
+        # TRL 0.23+: dataset params moved from SFTTrainer to SFTConfig
+        dataset_text_field="text",
+        max_length=model_cfg["max_seq_length"],
+        packing=False,
     )
 
     # ── Build trainer (with optional reasoning-weighted loss) ──
@@ -333,9 +337,6 @@ def train(config: dict[str, Any], resume_from: str | None = None) -> None:
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         args=sft_config,
-        dataset_text_field="text",
-        max_seq_length=model_cfg["max_seq_length"],
-        packing=False,
     )
 
     # ── Train ────────────────────────────────────────────────
