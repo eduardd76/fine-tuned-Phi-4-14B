@@ -1,0 +1,94 @@
+# CCDE-Level Integration Test Scenarios
+# Run: pytest tests/ -k "scenario" --scenario-file tests/scenarios/ccde_test_cases.yaml
+
+scenarios:
+  - id: sc_001
+    name: "Small campus — collapsed core"
+    input:
+      users: 300
+      sites: 1
+      uptime: 99.9
+    expected_keywords: ["collapsed core", "two-tier", "single building"]
+    min_confidence: 0.75
+
+  - id: sc_002
+    name: "Large campus — three-tier"
+    input:
+      users: 8000
+      sites: 1
+      uptime: 99.99
+    expected_keywords: ["three-tier", "distribution", "core layer"]
+    min_confidence: 0.80
+
+  - id: sc_003
+    name: "Data center — spine-leaf"
+    input:
+      users: 500
+      data_center: true
+      sites: 1
+    expected_keywords: ["spine-leaf", "VXLAN", "east-west"]
+    min_confidence: 0.80
+
+  - id: sc_004
+    name: "PCI-DSS compliance design"
+    input:
+      users: 1000
+      compliance: ["PCI-DSS"]
+      uptime: 99.99
+    expected_keywords: ["CDE", "segmentation", "firewall", "PCI-DSS"]
+    min_confidence: 0.85
+    requires_human_review: true
+
+  - id: sc_005
+    name: "HIPAA healthcare network"
+    input:
+      users: 2000
+      compliance: ["HIPAA"]
+      wireless: true
+    expected_keywords: ["VRF", "medical device", "isolation", "HIPAA"]
+    min_confidence: 0.80
+
+  - id: sc_006
+    name: "BGP session flap troubleshooting"
+    type: troubleshoot
+    input:
+      symptom: "BGP neighbor 10.0.0.1 flapping, notification sent"
+      device: "core-rtr-01"
+      protocol: "BGP"
+    expected_keywords: ["MAXPREFIX", "next-hop-self", "show bgp neighbors"]
+    min_confidence: 0.75
+
+  - id: sc_007
+    name: "WAN 80 branches topology"
+    input:
+      users: 80
+      sites: 80
+      wan_type: "SD-WAN"
+    expected_keywords: ["hub-and-spoke", "SD-WAN", "N(N-1)/2"]
+    min_confidence: 0.75
+
+  - id: sc_008
+    name: "99.99% uptime HA design"
+    input:
+      users: 5000
+      uptime: 99.99
+    expected_keywords: ["52.6 minutes", "N+1", "active-active", "HSRP"]
+    min_confidence: 0.80
+
+  - id: sc_009
+    name: "VXLAN BGP EVPN data center"
+    input:
+      data_center: true
+      users: 10000
+    expected_keywords: ["symmetric IRB", "L3VNI", "distributed anycast gateway"]
+    min_confidence: 0.80
+
+  - id: sc_010
+    name: "Cost estimate large enterprise"
+    type: estimate
+    input:
+      users: 5000
+      sites: 20
+      compliance: ["PCI-DSS"]
+    expected_keywords: ["CAPEX", "OPEX", "$"]
+    min_confidence: 0.70

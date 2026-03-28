@@ -1,0 +1,18 @@
+[Unit]
+Description=Phi-4 Network Architect API Server
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/fine-tuned-Phi-4-14B
+EnvironmentFile=-/home/ubuntu/fine-tuned-Phi-4-14B/.env
+Environment="PATH=/home/ubuntu/phi4-env/bin:/usr/local/cuda/bin:/usr/local/bin:/usr/bin"
+ExecStart=/home/ubuntu/phi4-env/bin/uvicorn api.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/data/logs/phi4-api.log
+StandardError=append:/data/logs/phi4-api-err.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,20 @@
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq && apt-get install -y -qq python3.11 python3.11-venv python3-pip && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY . .
+
+RUN python3.11 -m pip install --quiet \
+    torch --index-url https://download.pytorch.org/whl/cu121 && \
+    python3.11 -m pip install --quiet \
+    transformers>=4.47.0 peft>=0.14.0 bitsandbytes>=0.45.0 accelerate>=0.34.0 \
+    auto-gptq>=0.7.1 fastapi>=0.115.0 uvicorn[standard]>=0.32.0 httpx pydantic>=2.9.0 pyyaml
+
+ENV VIRTUAL_ARCHITECT_MODEL=/models/phi4-network-architect
+ENV PHI4_API_PORT=8000
+ENV PHI4_API_KEY=phi4-key-change-me
+
+EXPOSE 8000
+CMD ["python3.11", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

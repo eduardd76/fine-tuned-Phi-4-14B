@@ -1,0 +1,58 @@
+# Dream Team Virtual Architect Integration Configuration
+
+agent:
+  name: "virtual_architect"
+  model: "phi4-network-architect"
+  model_path: "/data/models/phi4-network-architect"    # Override with env VIRTUAL_ARCHITECT_MODEL
+  inbox: "a2a_virtual_architect_inbox"
+  capabilities:
+    - network_topology_design
+    - compliance_architecture
+    - ha_design
+    - cost_estimation
+    - technology_selection
+    - implementation_planning
+
+inference:
+  max_new_tokens: 2048
+  temperature: 0.7
+  cache_enabled: true
+  cache_ttl_seconds: 3600
+  cache_max_size: 200
+  confidence_threshold: 0.80       # Below this → flag for human review
+
+mcp_server:
+  port: 5555
+  host: "0.0.0.0"
+  api_key_env: "MCP_API_KEY"      # Read from environment
+  rate_limit:
+    requests_per_minute: 30
+    burst: 10
+
+a2a:
+  redis_url_env: "REDIS_URL"
+  inbox: "a2a_virtual_architect_inbox"
+  outbox: "a2a_team_leader_inbox"
+  timeout_seconds: 120
+
+api:
+  port: 8000
+  host: "0.0.0.0"
+  api_key_env: "PHI4_API_KEY"
+  cors_origins: ["*"]             # Restrict in production
+
+human_approval:
+  required_for:
+    - compliance: ["PCI-DSS", "HIPAA"]   # Any compliance design
+    - uptime_gte: 99.99                  # Critical HA designs
+    - confidence_lt: 0.80                # Low-confidence responses
+  approval_queue: "approval_queue"
+  timeout_hours: 24
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s [VA] %(levelname)s %(message)s"
+  file: "/data/logs/virtual_architect.log"
+  cloudwatch:
+    enabled: true
+    log_group: "/dreamteam/virtual-architect"
