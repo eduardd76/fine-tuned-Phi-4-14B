@@ -1,0 +1,445 @@
+[
+  {
+    "test_id": "tc_001",
+    "category": "topology",
+    "overall_score": 0.815,
+    "keyword_score": 0.75,
+    "source_score": 1.0,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 21812.302099999215,
+    "pass_fail": "PASS",
+    "keywords_missing": [
+      "2000 users per switch block"
+    ]
+  },
+  {
+    "test_id": "tc_002",
+    "category": "bgp",
+    "overall_score": 0.487,
+    "keyword_score": 0.3333333333333333,
+    "source_score": 0.5,
+    "confidence": 0.6,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 18188.481000001048,
+    "pass_fail": "WARN",
+    "keywords_missing": [
+      "IGP reachability",
+      "ibgp next-hop unchanged"
+    ]
+  },
+  {
+    "test_id": "tc_003",
+    "category": "ha",
+    "overall_score": 0.34,
+    "keyword_score": 0.0,
+    "source_score": 0.5,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 23383.77969999965,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "GLBP active-active",
+      "HSRP disabled preemption",
+      "VRRP open standard",
+      "AVG AVF"
+    ]
+  },
+  {
+    "test_id": "tc_004",
+    "category": "ospf",
+    "overall_score": 0.44,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 18313.183999998728,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "multi-area",
+      "area 0 backbone",
+      "ABR summarization",
+      "SPF calculation",
+      "type 3 LSA"
+    ]
+  },
+  {
+    "test_id": "tc_005",
+    "category": "compliance",
+    "overall_score": 0.575,
+    "keyword_score": 0.25,
+    "source_score": 1.0,
+    "confidence": 0.75,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 20342.92330000062,
+    "pass_fail": "WARN",
+    "keywords_missing": [
+      "CDE isolation",
+      "dedicated firewall",
+      "no direct internet to CDE"
+    ]
+  },
+  {
+    "test_id": "tc_006",
+    "category": "qos",
+    "overall_score": 0.34,
+    "keyword_score": 0.0,
+    "source_score": 0.5,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 14278.978500000449,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "EF DSCP 46",
+      "LLQ",
+      "33% priority queue limit",
+      "trust boundary"
+    ]
+  },
+  {
+    "test_id": "tc_007",
+    "category": "mpls",
+    "overall_score": 0.42,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.6,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 16415.50500000085,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "RD uniqueness",
+      "RT import export",
+      "VRF isolation",
+      "overlapping addresses"
+    ]
+  },
+  {
+    "test_id": "tc_008",
+    "category": "sdwan",
+    "overall_score": 0.215,
+    "keyword_score": 0.25,
+    "source_score": 0.0,
+    "confidence": 0.45,
+    "has_think": false,
+    "reasoning_steps": 0,
+    "latency_ms": 14303.537800000413,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "BFD probes",
+      "SLA class",
+      "brownout detection"
+    ]
+  },
+  {
+    "test_id": "tc_009",
+    "category": "vxlan",
+    "overall_score": 0.41,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.55,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 13491.63210000006,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "symmetric IRB",
+      "L3VNI",
+      "distributed anycast gateway",
+      "BGP EVPN control plane"
+    ]
+  },
+  {
+    "test_id": "tc_010",
+    "category": "ha",
+    "overall_score": 0.41,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.55,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 10907.20329999931,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "52.6 minutes per year",
+      "N+1 optimal",
+      "N+2 diminishing returns",
+      "convergence complexity"
+    ]
+  },
+  {
+    "test_id": "tc_011",
+    "category": "topology",
+    "overall_score": 0.24,
+    "keyword_score": 0.0,
+    "source_score": 0.0,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 13583.440799999153,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "2048 servers",
+      "8192 servers",
+      "N x M / 2",
+      "three-tier clos for web-scale"
+    ]
+  },
+  {
+    "test_id": "tc_012",
+    "category": "routing",
+    "overall_score": 0.45,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.75,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 15681.6859999999,
+    "pass_fail": "WARN",
+    "keywords_missing": [
+      "OSPF for single-vendor campus",
+      "BGP for multi-AS",
+      "interior vs exterior",
+      "topology hiding"
+    ]
+  },
+  {
+    "test_id": "tc_013",
+    "category": "security",
+    "overall_score": 0.44,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 15504.967599999873,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "DMZ buffer zone",
+      "two-tier DMZ",
+      "web server front-end",
+      "database backend separation",
+      "stateful inspection"
+    ]
+  },
+  {
+    "test_id": "tc_014",
+    "category": "mpls",
+    "overall_score": 0.31,
+    "keyword_score": 0.0,
+    "source_score": 0.5,
+    "confidence": 0.55,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 13443.1794000011,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "Option A most secure back-to-back VRF",
+      "Option C most scalable",
+      "Option B balanced",
+      "ASBR requirements"
+    ]
+  },
+  {
+    "test_id": "tc_015",
+    "category": "design_methodology",
+    "overall_score": 0.35,
+    "keyword_score": 0.0,
+    "source_score": 0.5,
+    "confidence": 0.75,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 13603.15509999964,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "top-down design",
+      "business requirements",
+      "technical constraints",
+      "organizational constraints",
+      "application criticality"
+    ]
+  },
+  {
+    "test_id": "tc_016",
+    "category": "bgp",
+    "overall_score": 0.44,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 10690.183799999431,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "AS-override",
+      "allowas-in",
+      "loop prevention",
+      "same ASN multi-homing"
+    ]
+  },
+  {
+    "test_id": "tc_017",
+    "category": "ospf",
+    "overall_score": 0.435,
+    "keyword_score": 0.25,
+    "source_score": 0.5,
+    "confidence": 0.55,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 7226.6251999990345,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "blocks type 3 4 5 LSAs",
+      "default route from ABR",
+      "smallest LSDB"
+    ]
+  },
+  {
+    "test_id": "tc_018",
+    "category": "qos",
+    "overall_score": 0.445,
+    "keyword_score": 0.25,
+    "source_score": 0.5,
+    "confidence": 0.6,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 11831.001200000173,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "shaping buffers delays",
+      "TCP retransmissions",
+      "egress only for shaping"
+    ]
+  },
+  {
+    "test_id": "tc_019",
+    "category": "vxlan",
+    "overall_score": 0.575,
+    "keyword_score": 0.25,
+    "source_score": 1.0,
+    "confidence": 0.75,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 16103.64269999991,
+    "pass_fail": "WARN",
+    "keywords_missing": [
+      "50 byte overhead",
+      "MTU 1550 minimum",
+      "VTEP requirement"
+    ]
+  },
+  {
+    "test_id": "tc_020",
+    "category": "wan",
+    "overall_score": 0.41,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.55,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 25314.387700000225,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "N(N-1)/2 formula",
+      "hub-and-spoke scalable",
+      "full mesh expensive",
+      "partial mesh compromise"
+    ]
+  },
+  {
+    "test_id": "tc_021",
+    "category": "compliance",
+    "overall_score": 0.64,
+    "keyword_score": 0.4,
+    "source_score": 1.0,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 13662.72360000039,
+    "pass_fail": "WARN",
+    "keywords_missing": [
+      "VRF isolation",
+      "PVLAN",
+      "medical device VLAN"
+    ]
+  },
+  {
+    "test_id": "tc_022",
+    "category": "sdwan",
+    "overall_score": 0.45,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.75,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 11290.78859999936,
+    "pass_fail": "WARN",
+    "keywords_missing": [
+      "vBond orchestration",
+      "vManage management",
+      "vSmart control OMP",
+      "vEdge data plane",
+      "BFD SLA"
+    ]
+  },
+  {
+    "test_id": "tc_023",
+    "category": "bgp",
+    "overall_score": 0.44,
+    "keyword_score": 0.0,
+    "source_score": 1.0,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 16590.33719999934,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "penalty accumulation",
+      "flap count",
+      "suppress limit",
+      "half-life decay",
+      "reuse limit"
+    ]
+  },
+  {
+    "test_id": "tc_024",
+    "category": "ha",
+    "overall_score": 0.565,
+    "keyword_score": 0.25,
+    "source_score": 1.0,
+    "confidence": 0.7,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 14905.233800000133,
+    "pass_fail": "WARN",
+    "keywords_missing": [
+      "50% utilization limit",
+      "active-active complexity",
+      "N+1 minimum"
+    ]
+  },
+  {
+    "test_id": "tc_025",
+    "category": "topology",
+    "overall_score": 0.42,
+    "keyword_score": 0.2,
+    "source_score": 0.5,
+    "confidence": 0.6,
+    "has_think": true,
+    "reasoning_steps": 0,
+    "latency_ms": 23478.442200001155,
+    "pass_fail": "FAIL",
+    "keywords_missing": [
+      "VM mobility",
+      "consistent latency",
+      "horizontal scaling",
+      "north-south for three-tier"
+    ]
+  }
+]
