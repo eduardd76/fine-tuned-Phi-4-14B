@@ -12,23 +12,32 @@ from datetime import datetime
 
 
 def run_sft(output_path: str) -> None:
-    """Run SFT dataset generator using existing dataset_generator.py."""
+    """Run SFT dataset generator. Uses template generator (no API key needed)
+    or OpenAI-backed generator if OPENAI_API_KEY is set."""
     sys.path.insert(0, str(Path(__file__).parent))
-    from dataset_generator import NetworkArchitectDatasetGenerator
-
-    generator = NetworkArchitectDatasetGenerator(
-        output_dir=output_path,
-        openai_api_key=os.environ["OPENAI_API_KEY"],
-    )
-    generator.generate_all()
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if api_key and api_key not in ("", "your-key-here"):
+        from dataset_generator import DatasetGenerator
+        generator = DatasetGenerator(openai_api_key=api_key)
+        generator.generate_dataset(count=9000, output_dir=Path(output_path))
+    else:
+        print("  No OPENAI_API_KEY — using template generator (no API calls)")
+        from template_dataset_generator import generate_sft_dataset
+        generate_sft_dataset(output_path, count=9000)
     print(f"✓ SFT dataset generation complete → {output_path}")
 
 
 def run_grpo(output_path: str, target: int = 800) -> None:
-    """Run GRPO dataset generator."""
+    """Run GRPO dataset generator (template-based, no API key needed)."""
     sys.path.insert(0, str(Path(__file__).parent))
-    from grpo_generator import generate_grpo_dataset
-    generate_grpo_dataset(output_path, target)
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if api_key and api_key not in ("", "your-key-here"):
+        from grpo_generator import generate_grpo_dataset
+        generate_grpo_dataset(output_path, target)
+    else:
+        print("  No OPENAI_API_KEY — using template GRPO generator")
+        from template_dataset_generator import generate_grpo_dataset_template
+        generate_grpo_dataset_template(output_path, target)
 
 
 def run_agentic(output_path: str, target: int = 2000) -> None:
