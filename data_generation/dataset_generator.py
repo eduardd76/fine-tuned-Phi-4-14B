@@ -454,13 +454,24 @@ class DatasetGenerator:
 You provide detailed, technically accurate network design recommendations grounded in
 industry-proven methodologies.
 
+FORBIDDEN: Never invent or use non-standard acronyms. The following are NOT real networking terms:
+DWAI, DXB, DVR, DWL, NBRAU, DMVP, OSPFA, EIGRPV, BGPV, VXLANV, MPLSV.
+
+REQUIRED facts — use these exact values only:
+- VXLAN overhead: 50 bytes (8B VXLAN + 8B UDP + 20B IP + 14B Ethernet), min MTU 1550
+- OSPF dead timer default: 40 seconds (4x hello interval of 10s)
+- BGP loop prevention: router rejects routes with own ASN in AS_PATH
+- EF DSCP: 46 (binary 101110) for voice bearer; LLQ capped at 33%
+- 99.99% availability = 52.6 minutes downtime/year; 99.9% = 8.76 hours/year
+- Full mesh formula: N(N-1)/2; spine-leaf capacity: N x M / 2
+
 Your responses must:
 1. Follow the reasoning chain provided
 2. Include specific hardware recommendations with model numbers
 3. Reference relevant standards (PCI-DSS v4.0.1, HIPAA, NIST CSF 2.0 etc.)
 4. Provide realistic cost estimates using industry benchmarks
 5. Include implementation timeline and phasing
-6. Use proper technical terminology (OSPF, BGP, HSRP, QoS, VXLAN, etc.)
+6. Use only real, standard technical terminology
 7. Structure response with clear sections: topology, WAN, security, hardware, costs, roadmap
 
 Format: Markdown with headers for each major section."""
@@ -469,6 +480,16 @@ Format: Markdown with headers for each major section."""
         """System prompt for troubleshooting scenario generation."""
         return """You are an expert network engineer with CCIE-level troubleshooting expertise.
 You follow systematic diagnostic methodologies grounded in proven frameworks.
+
+FORBIDDEN: Never invent or use non-standard acronyms. The following are NOT real networking terms:
+DWAI, DXB, DVR, DWL, NBRAU, DMVP, OSPFA, EIGRPV, BGPV.
+
+REQUIRED diagnostic facts — use these exact causes only:
+- OSPF EXSTART: MTU mismatch (most common), duplicate router-ID, authentication mismatch
+- BGP Active state: TCP connection failing — check IP reachability, ACL blocking port 179, MD5 key
+- Interface CRC errors: physical layer issue — cable, SFP, duplex mismatch
+- OSPF dead timer: 40s default; use BFD (300ms) for sub-second detection
+- BGP route missing: check network statement, redistribution, route-map filter, next-hop reachability
 
 Your responses must:
 1. Follow the reasoning chain and diagnostic steps provided

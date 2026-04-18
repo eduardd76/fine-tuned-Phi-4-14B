@@ -7,6 +7,7 @@ pipeline is drop-in compatible.
 """
 from __future__ import annotations
 import json
+import re
 import random
 import sys
 from pathlib import Path
@@ -17,6 +18,23 @@ from fact_registry import (
     BGP_FACTS, OSPF_FACTS, FHRP_FACTS, SDWAN_FACTS, MPLS_FACTS,
     COMPLIANCE_FACTS, METHODOLOGY_FACTS,
 )
+
+_CONTAMINATION_PATTERNS = [
+    r'<\|repo_name\|>', r'<\|file_sep\|>', r'\[\d+\]:\s*#!/',
+    r'#!/usr/bin/env\s+python', r'Copyright \d{4}.*?(?:CSIRO|Data61)',
+    r'</system\s*\nuser', r'<\|im_start\|>user',
+    r'github\.com/[a-zA-Z0-9\-]+/[a-zA-Z0-9\-]+', r'\bpip install\b',
+]
+
+
+def _is_clean_sample(sample: dict) -> bool:
+    """Return False if any message content contains contamination artifacts."""
+    text = " ".join(m.get("content", "") for m in sample.get("messages", []))
+    return not any(
+        re.search(p, text, re.IGNORECASE | re.MULTILINE)
+        for p in _CONTAMINATION_PATTERNS
+    )
+
 
 # ---------------------------------------------------------------------------
 # SFT TEMPLATES  (question → detailed answer with <think> blocks)
@@ -151,7 +169,7 @@ SFT_TEMPLATES = [
             f"**{OSPF_FACTS['multi_area']}**\n\n"
             f"- {OSPF_FACTS['area_0_backbone']} — all other areas connect here\n"
             f"- {OSPF_FACTS['abr_summarization']} — ABRs inject Type 3 LSAs with summary routes\n"
-            f"- {OSPF_FACTS['type3_lsa']} — inter-area summary from ABR\n\n"
+            f"- {OSPF_FACTS['type_3_lsa']} — inter-area summary from ABR\n\n"
             "**Design for 500 routers:**\n"
             "- Area 0 (backbone): 20-30 core routers, P2P links preferred\n"
             "- Regular areas: 50-80 routers each (6-8 areas)\n"
@@ -215,8 +233,8 @@ SFT_TEMPLATES = [
             "<think>\nDampening suppresses flapping routes to prevent churn.\n"
             "Key params: penalty, half-life, suppress-limit, reuse-limit.\n</think>\n\n"
             "**BGP Route Dampening**\n\n"
-            f"- {BGP_FACTS['penalty_accumulation']}\n"
-            f"- {BGP_FACTS['half_life_decay']}\n\n"
+            f"- {BGP_FACTS['dampening_penalty']}\n"
+            f"- {BGP_FACTS['half_life']}\n\n"
             "**Key Parameters:**\n"
             "- `half-life 15` — penalty halves every 15 minutes (default)\n"
             "- `suppress-limit 2000` — route suppressed above this penalty\n"
@@ -246,10 +264,9 @@ SFT_TEMPLATES = [
             "- `import RT` — routes with this RT imported into VRF\n\n"
             f"**VRF Isolation:** {MPLS_FACTS['vrf_isolation']}\n\n"
             "**Inter-provider options:**\n"
-            f"- {MPLS_FACTS['option_a_b_c']}\n"
-            "  - Option A: Back-to-back VRFs (simplest, per-VRF eBGP)\n"
-            "  - Option B: eBGP labeled VPNv4 between ASBRs (scalable)\n"
-            "  - Option C: Multi-hop eBGP, LSPs stitched (most scalable)"
+            f"- {MPLS_FACTS['option_a']}\n"
+            f"- {MPLS_FACTS['option_b']}\n"
+            f"- {MPLS_FACTS['option_c']}"
         ),
         "expected_key_facts": ["RD uniqueness", "RT import export", "VRF isolation", "Option A/B/C"],
     },
@@ -260,7 +277,7 @@ SFT_TEMPLATES = [
         "answer": (
             "<think>\nvBond = orchestrator/NAT traversal\nvSmart = control plane (OMP)\nvManage = management plane\nWAN Edge = data plane\n</think>\n\n"
             "**Cisco SD-WAN Control Plane Architecture**\n\n"
-            f"**vBond:** {SDWAN_FACTS['vbond_orchestration']}\n"
+            f"**vBond:** {SDWAN_FACTS['vbond']}\n"
             "- First point of contact for WAN edges\n"
             "- Facilitates NAT traversal (STUN-based)\n"
             "- Must have public IP\n\n"
@@ -305,8 +322,8 @@ SFT_TEMPLATES = [
             "<think>\nPCI DSS requires cardholder data environment (CDE) isolation.\n"
             "Segmentation reduces scope. Without it, entire network is in scope.\n</think>\n\n"
             f"**PCI DSS Network Segmentation**\n\n"
-            f"- {COMPLIANCE_FACTS['pci_segmentation']}\n"
-            f"- {COMPLIANCE_FACTS['pci_firewall']}\n\n"
+            f"- {COMPLIANCE_FACTS['cde_isolation']}\n"
+            f"- {COMPLIANCE_FACTS['dedicated_firewall']}\n\n"
             "**Required Controls:**\n"
             "1. **Firewall** between CDE and untrusted networks\n"
             "2. **No direct routes** from internet to CDE\n"
@@ -351,15 +368,15 @@ SFT_TEMPLATES = [
         "answer": (
             "<think>\nHSRP: Cisco proprietary, active/standby.\nVRRP: open standard, active/standby.\nGLBP: Cisco, active/active load balancing.\n</think>\n\n"
             "**First-Hop Redundancy Protocol Comparison**\n\n"
-            f"**HSRP:** {FHRP_FACTS['hsrp']}\n"
+            f"**HSRP:** {FHRP_FACTS['hsrp_preemption']}\n"
             "- Cisco proprietary, versions 1 and 2\n"
             "- One active, one standby + multiple listen\n"
             "- Virtual IP + virtual MAC (0000.0c07.acXX)\n\n"
-            f"**VRRP:** {FHRP_FACTS['vrrp']}\n"
+            f"**VRRP:** {FHRP_FACTS['vrrp_open_standard']}\n"
             "- RFC 5798, vendor-neutral\n"
             "- One master + backups\n"
             "- Preemption enabled by default\n\n"
-            f"**GLBP:** {FHRP_FACTS['glbp']}\n"
+            f"**GLBP:** {FHRP_FACTS['glbp_active_active']}\n"
             "- Active Virtual Gateway + Active Virtual Forwarders\n"
             "- Round-robin or weighted load balancing\n"
             "- Better link utilization than HSRP/VRRP\n\n"
@@ -406,11 +423,11 @@ SFT_TEMPLATES = [
             "2. **DMZ** — Web servers, API gateways, MFA proxies\n"
             "3. **Extranet** — B2B partner VLANs (segmented per partner)\n"
             "4. **Internal** — Employee workstations, internal apps\n"
-            f"5. **CDE** — {COMPLIANCE_FACTS['pci_segmentation']} — payment systems\n"
+            f"5. **CDE** — {COMPLIANCE_FACTS['cde_isolation']} — payment systems\n"
             "6. **Management** — Out-of-band network for device management\n"
             "7. **Restricted** — SWIFT, trading systems, core banking\n\n"
             "**Controls:**\n"
-            f"- {COMPLIANCE_FACTS['pci_firewall']} between all zones\n"
+            f"- {COMPLIANCE_FACTS['dedicated_firewall']} between all zones\n"
             "- Micro-segmentation within zones (Zero Trust)\n"
             "- Encrypted management (SSH v2, TLS 1.3)\n"
             "- IPS inline on Internet ingress and CDE boundary"
@@ -466,7 +483,7 @@ def generate_sft_dataset(output_dir: str | Path, count: int = 9000) -> int:
         tpl = SFT_TEMPLATES[i % base]
         sample = _vary(tpl, i // base)
 
-        samples.append({
+        candidate = {
             "id": f"sft_{i:05d}",
             "category": sample["category"],
             "messages": [
@@ -476,7 +493,9 @@ def generate_sft_dataset(output_dir: str | Path, count: int = 9000) -> int:
             ],
             "expected_key_facts": sample["expected_key_facts"],
             "source": "template",
-        })
+        }
+        if _is_clean_sample(candidate):
+            samples.append(candidate)
 
     # Shuffle and split 80/10/10
     random.shuffle(samples)
@@ -602,8 +621,8 @@ def generate_grpo_dataset_template(output_dir: str | Path, count: int = 800) -> 
             "answer_type": "exact_value",
             "answer": (
                 "<think>\nPenalty accumulates on flap; decays exponentially.\n</think>\n\n"
-                f"- {BGP_FACTS['penalty_accumulation']}\n"
-                f"- {BGP_FACTS['half_life_decay']}\n\n"
+                f"- {BGP_FACTS['dampening_penalty']}\n"
+                f"- {BGP_FACTS['half_life']}\n\n"
                 "Default half-life = 15 minutes; penalty halves every 15 min without flaps."
             ),
         },
@@ -612,7 +631,7 @@ def generate_grpo_dataset_template(output_dir: str | Path, count: int = 800) -> 
     samples = []
     for i in range(count):
         tpl = GRPO_TEMPLATES[i % len(GRPO_TEMPLATES)]
-        samples.append({
+        candidate = {
             "id": f"grpo_{i:04d}",
             "sub_type": tpl["sub_type"],
             "messages": [
@@ -624,7 +643,9 @@ def generate_grpo_dataset_template(output_dir: str | Path, count: int = 800) -> 
             "exact_values": tpl["exact_values"],
             "answer_type": tpl["answer_type"],
             "reference_answer": tpl["answer"],
-        })
+        }
+        if _is_clean_sample(candidate):
+            samples.append(candidate)
 
     out = output_dir / "grpo_train.jsonl"
     with open(out, "w") as f:

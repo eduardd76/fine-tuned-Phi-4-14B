@@ -126,6 +126,22 @@ MPLS_FACTS = {
     "option_b": "Option B balanced — exchanges labeled VPN routes between ASBRs",
     "option_c": "Option C most scalable — recursive BGP next-hop, no VRF state at ASBR",
     "asbr_requirements": "ASBR requirements — Option A: VRF per customer; Option B: eBGP labeled; Option C: recursive",
+    "label_stack": "MPLS label stack — outer label for transport LSP, inner label for VPN service (two-label stack on PE)",
+    "php": "PHP penultimate hop popping — second-to-last LSR removes transport label before egress PE to reduce lookup",
+}
+
+# ── OSPF Area Types ──────────────────────────────────────────────────────────
+OSPF_AREA_FACTS = {
+    "stub_area": "stub area — blocks Type 4 and Type 5 external LSAs; ABR injects default route",
+    "nssa": "NSSA Not-So-Stubby Area — allows external redistribution via Type 7 LSA; blocks Type 5",
+    "type7_lsa": "Type 7 LSA — NSSA external LSA; converted to Type 5 at ABR boundary for other areas",
+    "virtual_link": "virtual link — extends backbone Area 0 connectivity through non-backbone transit area",
+    "abr_definition": "ABR definition — router with at least one interface in Area 0 and one in a non-backbone area",
+    "asbr_definition": "ASBR definition — router redistributing external routes (non-OSPF) into the OSPF domain",
+    "spf_timer": "SPF timer — initial 200ms delay before SPF recalculation; prevents thrashing during instability",
+    "ospf_cost": "OSPF cost — reference bandwidth 100 Mbps by default; change with auto-cost reference-bandwidth",
+    "lsa_flooding": "LSA flooding — Type 1/2 stay within area; Type 3/4/5 propagate across area boundaries",
+    "area_range": "area range — ABR summarization command; advertises single Type 3 LSA for multiple subnets",
 }
 
 # ── Compliance / Security ─────────────────────────────────────────────────────
@@ -164,6 +180,7 @@ ALL_FACTS = {
     "fhrp": FHRP_FACTS,
     "sdwan": SDWAN_FACTS,
     "mpls": MPLS_FACTS,
+    "ospf_area": OSPF_AREA_FACTS,
     "compliance": COMPLIANCE_FACTS,
     "methodology": METHODOLOGY_FACTS,
 }

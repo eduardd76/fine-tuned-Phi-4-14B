@@ -30,8 +30,8 @@ training:
   per_device_train_batch_size: 1
   gradient_accumulation_steps: 16  # Effective batch = 16
   warmup_steps: 100
-  num_train_epochs: 3
-  learning_rate: 1.0e-4
+  num_train_epochs: 2
+  learning_rate: 5.0e-5
   fp16: false
   bf16: true  # Ampere+ (RTX 4090)
   logging_steps: 25
@@ -59,6 +59,17 @@ data:
   val_file: "generated_data/validation_data.jsonl"
   text_column: "text"
   max_samples: null  # null = use all
+  category_sampling_weights:
+    mpls: 0.20        # Worst category: avg 24.8, delta -8.6 vs base
+    bgp: 0.15
+    ospf: 0.15
+    qos: 0.12
+    vxlan: 0.12
+    ha: 0.10
+    wan: 0.08
+    compliance: 0.05
+    sdwan: 0.03
+  negative_example_ratio: 0.10  # 10% ORPO negative pairs to suppress hallucination
 
 output:
   dir: "models/phi4-network-architect"

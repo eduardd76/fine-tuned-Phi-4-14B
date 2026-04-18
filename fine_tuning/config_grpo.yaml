@@ -28,7 +28,7 @@ grpo:
   temperature: 0.9              # Higher temp for diverse rollouts
   top_p: 0.95
   max_new_tokens: 512           # Shorter for GRPO — reward on reasoning quality
-  kl_coeff: 0.04                # KL penalty prevents reward hacking (DeepSeek-R1 value)
+  kl_coeff: 0.1                 # Increased from 0.04 to prevent GRPO drift from base knowledge
   clip_epsilon: 0.2             # PPO clipping
 
 training:
