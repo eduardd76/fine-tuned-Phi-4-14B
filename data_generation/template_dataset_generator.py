@@ -615,7 +615,7 @@ def generate_grpo_dataset_template(output_dir: str | Path, count: int = 800) -> 
         {
             "sub_type": "bgp_dampening",
             "question": "In BGP route dampening, what happens to the penalty over time?",
-            "answer_key": BGP_FACTS["half_life_decay"],
+            "answer_key": BGP_FACTS["half_life"],
             "expected_key_facts": ["half-life decay", "penalty accumulation"],
             "exact_values": ["half-life", "15 minutes"],
             "answer_type": "exact_value",
