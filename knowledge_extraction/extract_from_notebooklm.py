@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -35,6 +36,31 @@ from rich.table import Table
 from rich.tree import Tree
 
 console = Console()
+
+_CONTAMINATION_PATTERNS = [
+    r'<\|repo_name\|>', r'<\|file_sep\|>', r'\[\d+\]:\s*#!/',
+    r'#!/usr/bin/env\s+python', r'Copyright \d{4}.*?(?:CSIRO|Data61)',
+    r'</system\s*\nuser', r'<\|im_start\|>user',
+    r'github\.com/[a-zA-Z0-9\-]+/[a-zA-Z0-9\-]+', r'\bpip install\b',
+]
+_NETWORKING_TERMS = re.compile(
+    r'\b(?:BGP|OSPF|MPLS|VXLAN|QoS|DSCP|VLAN|VRF|ACL|firewall|router|switch|subnet|'
+    r'routing|protocol|interface|topology|bandwidth|latency|MTU|TCP|UDP|IP|WAN|LAN)\b',
+    re.IGNORECASE,
+)
+
+
+def clean_extracted_text(text: str) -> str:
+    """Strip contamination artifacts from extracted text."""
+    for pattern in _CONTAMINATION_PATTERNS:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.MULTILINE)
+    return text.strip()
+
+
+def is_networking_content(text: str) -> bool:
+    """Return True if text contains at least 2 distinct networking terms."""
+    return len(set(_NETWORKING_TERMS.findall(text.upper()))) >= 2
+
 
 KNOWLEDGE_DIR = Path(__file__).parent
 KNOWLEDGE_FILES = {
@@ -246,6 +272,10 @@ class NotebookLMKnowledgeExtractor:
 
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
+
+        # Clean value of contamination artifacts before storing
+        if isinstance(value, str):
+            value = clean_extracted_text(value)
 
         # Add metadata to the new entry
         entry = {

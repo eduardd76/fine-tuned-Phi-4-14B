@@ -7,6 +7,22 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+CONTAMINATION_PATTERNS = [
+    r'<\|repo_name\|>', r'<\|file_sep\|>', r'\[\d+\]:\s*#!/',
+    r'#!/usr/bin/env\s+python', r'Copyright \d{4}.*?(?:CSIRO|Data61)',
+    r'</system\s*\nuser', r'<\|im_start\|>user',
+    r'github\.com/[a-zA-Z0-9\-]+/[a-zA-Z0-9\-]+', r'\bpip install\b',
+    r'^\s*from [a-z_]+ import |^\s*import [a-z_]+$', r'\bMakefile\b.*\bCFLAGS\b',
+]
+
+
+def has_no_contamination(text: str) -> bool:
+    """Return True if text contains no training data contamination artifacts."""
+    return not any(
+        re.search(p, text, re.IGNORECASE | re.MULTILINE)
+        for p in CONTAMINATION_PATTERNS
+    )
+
 
 @dataclass
 class ValidationResult:
@@ -96,6 +112,12 @@ def validate_sample(sample: dict, sub_type: str = "") -> ValidationResult:
     if not vague_ok:
         result.failures.append("Uses 'it depends' without concrete recommendation")
 
+    # ── Check 7: No training data contamination ───────────────────────────────
+    clean = has_no_contamination(full_response)
+    result.checks["no_contamination"] = clean
+    if not clean:
+        result.failures.append("Response contains training data contamination artifacts")
+
     passed_count = sum(result.checks.values())
     result.score = passed_count / len(result.checks)
     result.passed = result.score == 1.0
@@ -161,6 +183,13 @@ def validate_agentic_sample(sample: dict) -> ValidationResult:
     result.checks["multi_turn_structure"] = has_multi_turn
     if not has_multi_turn:
         result.failures.append("Agentic sample needs ≥2 assistant turns and 1 tool turn")
+
+    # ── Check 7: No training data contamination ───────────────────────────────
+    all_content = " ".join(m.get("content", "") for m in messages)
+    clean = has_no_contamination(all_content)
+    result.checks["no_contamination"] = clean
+    if not clean:
+        result.failures.append("Sample contains training data contamination artifacts")
 
     passed_count = sum(result.checks.values())
     result.score = passed_count / len(result.checks)

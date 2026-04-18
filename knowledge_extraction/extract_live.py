@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import subprocess
 import sys
 import time
@@ -34,9 +36,36 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+_CONTAMINATION_PATTERNS = [
+    r'<\|repo_name\|>', r'<\|file_sep\|>', r'\[\d+\]:\s*#!/',
+    r'#!/usr/bin/env\s+python', r'Copyright \d{4}.*?(?:CSIRO|Data61)',
+    r'</system\s*\nuser', r'<\|im_start\|>user',
+    r'github\.com/[a-zA-Z0-9\-]+/[a-zA-Z0-9\-]+', r'\bpip install\b',
+]
+_NETWORKING_TERMS = re.compile(
+    r'\b(?:BGP|OSPF|MPLS|VXLAN|QoS|DSCP|VLAN|VRF|ACL|firewall|router|switch|subnet|'
+    r'routing|protocol|interface|topology|bandwidth|latency|MTU|TCP|UDP|IP|WAN|LAN)\b',
+    re.IGNORECASE,
+)
+
+
+def clean_extracted_text(text: str) -> str:
+    """Strip contamination artifacts from extracted text."""
+    for pattern in _CONTAMINATION_PATTERNS:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.MULTILINE)
+    return text.strip()
+
+
+def is_networking_content(text: str) -> bool:
+    """Return True if text contains at least 2 distinct networking terms."""
+    return len(set(_NETWORKING_TERMS.findall(text.upper()))) >= 2
+
+
 ROOT = Path(__file__).parent.parent
 KNOWLEDGE_DIR = Path(__file__).parent
-NOTEBOOK_ID = "86b1a8b9-8a9c-486e-8fb3-2e2e0f914528"
+# Notebook ID can be overridden via env var or --notebook-id CLI arg.
+# Default is the CCDE Network Architecture notebook created during project setup.
+NOTEBOOK_ID = os.environ.get("NOTEBOOKLM_NOTEBOOK_ID", "86b1a8b9-8a9c-486e-8fb3-2e2e0f914528")
 
 # ─────────────────────────────────────────────────────────────
 # Query definitions
@@ -242,6 +271,11 @@ def extract_category(
 
         answer = query_notebooklm_mcp(query)
         if answer:
+            answer = clean_extracted_text(answer)
+            if not is_networking_content(answer):
+                print(f"  ✗ Skipped — no networking content detected")
+                failed += 1
+                continue
             if enrich_knowledge_file(file_path, section, key, answer, query):
                 print(f"  ✓ Saved to {section}.{key} ({len(answer)} chars)")
                 success += 1
@@ -303,7 +337,17 @@ def main() -> None:
     )
     parser.add_argument("--dry-run", action="store_true", help="Preview without saving")
     parser.add_argument("--pause", type=float, default=1.0, help="Seconds between queries")
+    parser.add_argument(
+        "--notebook-id",
+        default=None,
+        help="NotebookLM notebook ID (overrides NOTEBOOKLM_NOTEBOOK_ID env var)",
+    )
     args = parser.parse_args()
+
+    # Allow CLI flag to override env var
+    if args.notebook_id:
+        global NOTEBOOK_ID  # noqa: PLW0603
+        NOTEBOOK_ID = args.notebook_id
 
     if args.category == "all":
         run_full_extraction(dry_run=args.dry_run)
